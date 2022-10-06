@@ -116,26 +116,25 @@ repositories {
 }
 
 
-
 dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
-    implementation "org.cyclops.integratedterminals:IntegratedTerminals:${mc_version}-${integratedterminals_version}:deobf"
-    implementation "org.cyclops.integratedtunnels:IntegratedTunnels:${mc_version}-${integratedtunnels_version}:deobf"
-    implementation "org.cyclops.integratedcrafting:IntegratedCrafting:${mc_version}-${integratedcrafting_version}:deobf"
+    implementation "org.cyclops.integratedterminals:IntegratedTerminals:1.12.2-${integratedterminals_version}:deobf"
+    implementation "org.cyclops.integratedtunnels:IntegratedTunnels:1.12.2-${integratedtunnels_version}:deobf"
+    implementation "org.cyclops.integratedcrafting:IntegratedCrafting:1.12.2-${integratedcrafting_version}:deobf"
 
-    implementation "org.cyclops.cyclopscore:CyclopsCore:${mc_version}-${cyclopscore_version}:deobf"
+    implementation "org.cyclops.cyclopscore:CyclopsCore:1.12.2-${cyclopscore_version}:deobf"
 
     implementation("org.cyclops.integrateddynamicscompat:IntegratedDynamicsCompat:${integrateddynamicscompat_version}:deobf") {
         exclude group: 'org.cyclops.cyclopscore', module: 'CyclopsCore'
         exclude group: 'org.cyclops.integrateddynamics', module: 'IntegratedDynamics'
     }
 
-    implementation("org.cyclops.integrateddynamics:IntegratedDynamics:${mc_version}-${integrateddynamics_version}:deobf") {
+    implementation("org.cyclops.integrateddynamics:IntegratedDynamics:1.12.2-${integrateddynamics_version}:deobf") {
         exclude group: 'org.cyclops.cyclopscore', module: 'CyclopsCore'
     }
 
-    implementation("org.cyclops.commoncapabilities:CommonCapabilities:${mc_version}-${commoncapabilities_version}:deobf") {
+    implementation("org.cyclops.commoncapabilities:CommonCapabilities:1.12.2-${commoncapabilities_version}:deobf") {
         exclude group: 'org.cyclops.cyclopscore', module: 'CyclopsCore'
     }
 
