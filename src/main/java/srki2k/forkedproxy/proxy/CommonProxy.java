@@ -16,6 +16,7 @@ public class CommonProxy extends CommonProxyComponent {
     public void registerPacketHandlers(PacketHandler packetHandler) {
         super.registerPacketHandlers(packetHandler);
 
+        packetHandler.register(LoginProxyRenderPacket.class);
         packetHandler.register(RemoveProxyRenderPacket.class);
         packetHandler.register(UpdateProxyRenderPacket.class);
         packetHandler.register(UpdateProxyDisplayValuePacket.class);
