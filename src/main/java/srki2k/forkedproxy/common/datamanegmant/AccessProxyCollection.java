@@ -1,4 +1,4 @@
-package srki2k.forkedproxy.common.storage;
+package srki2k.forkedproxy.common.datamanegmant;
 
 import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.util.BlockPosHelper;
@@ -18,6 +18,10 @@ import java.util.Map;
 public class AccessProxyCollection extends WorldSavedData {
     public static final String NAME = ForkedProxy.MODID + "_access_proxy_collection";
     private HashMap<BlockPos, BlockPos> map = new HashMap<>();
+
+    public AccessProxyCollection(String name) {
+        this();
+    }
 
     public AccessProxyCollection() {
         super(NAME);

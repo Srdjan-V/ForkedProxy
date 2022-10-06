@@ -25,7 +25,6 @@ import org.cyclops.integratedtunnels.core.ExtendedFakePlayer;
 import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.client.gui.GuiAccessProxy;
 import srki2k.forkedproxy.common.datamanegmant.ContainerAccessProxy;
-import srki2k.forkedproxy.common.storage.AccessProxyCollection;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 import srki2k.forkedproxy.util.Constants;
 
@@ -61,7 +60,7 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
     public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
         super.onBlockAdded(world, pos, state);
         if (!world.isRemote) {
-            AccessProxyCollection.getInstance(world).set(pos, pos);
+            //AccessProxyCollection.getInstance(world).set(pos, pos);
             TileAccessProxy te = (TileAccessProxy) world.getTileEntity(pos);
             if (te == null) {
                 return;
@@ -85,7 +84,7 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
             }
             te.sendRemoveRenderPacket();
             te.unRegisterEventHandle();
-            AccessProxyCollection.getInstance(world).remove(pos);
+            //AccessProxyCollection.getInstance(world).remove(pos);
             te.updateTargetBlock();
         }
         super.onPreBlockDestroyed(world, pos);

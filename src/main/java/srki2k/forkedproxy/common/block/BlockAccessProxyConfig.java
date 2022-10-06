@@ -9,7 +9,7 @@ import org.cyclops.cyclopscore.config.extendedconfig.BlockContainerConfig;
 
 public class BlockAccessProxyConfig extends BlockContainerConfig {
 
-    public static BlockAccessProxyConfig INSTANCE;
+    public static BlockAccessProxyConfig _instance;
 
     @ConfigurableProperty(
             category = ConfigurableTypeCategory.BLOCK,

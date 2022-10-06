@@ -17,7 +17,7 @@ import org.cyclops.cyclopscore.init.ItemCreativeTab;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.init.RecipeHandler;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
-import srki2k.forkedproxy.common.datamanegmant.WorldProxyRenderManager;
+import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
 import srki2k.forkedproxy.util.Constants;
 
 @Mod(
@@ -70,7 +70,7 @@ public class ForkedProxy extends ModBase {
 
     @Mod.EventHandler
     public void onServerStopping(FMLServerStoppingEvent event) {
-        WorldProxyRenderManager.cleanExistingTiles();
+        WorldProxyManager.cleanExistingTiles();
     }
 
     @Override

@@ -37,10 +37,9 @@ import org.cyclops.integratedtunnels.core.part.PartTypeInterfacePositionedAddon;
 import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
-import srki2k.forkedproxy.common.datamanegmant.WorldProxyRenderManager;
+import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
 import srki2k.forkedproxy.common.id_network.AccessProxyNetworkElement;
 import srki2k.forkedproxy.common.packet.*;
-import srki2k.forkedproxy.common.storage.AccessProxyCollection;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
@@ -241,7 +240,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 //                markDirty();
                 if (old_target != null) notifyTargetChange();
                 ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-                AccessProxyCollection.getInstance(this.world).set(this.pos, this.target.getBlockPos());
+                //AccessProxyCollection.getInstance(this.world).set(this.pos, this.target.getBlockPos());
                 updateTargetBlock();
                 if (old_target != null) {
                     updateTargetBlock(this.world, old_target.getBlockPos());
@@ -320,7 +319,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         super.onLoad();
         if (!MinecraftHelpers.isClientSide()) {
             this.shouldSendUpdateEvent = true;
-            WorldProxyRenderManager.registerProxy(this);
+            WorldProxyManager.registerProxy(this);
         }
     }
 
@@ -331,7 +330,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     public void unRegisterEventHandle() {
-        WorldProxyRenderManager.unRegisterProxy(this);
+        WorldProxyManager.unRegisterProxy(this);
     }
 
     @Override

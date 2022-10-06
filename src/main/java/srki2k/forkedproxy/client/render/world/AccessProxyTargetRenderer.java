@@ -135,19 +135,25 @@ public class AccessProxyTargetRenderer {
     private static void rotateToFacing(EnumFacing facing) {
         short rotationY = 0;
         short rotationX = 0;
-        if (facing == EnumFacing.SOUTH) {
-            rotationY = 0;
-        } else if (facing == EnumFacing.NORTH) {
-            rotationY = 180;
-        } else if (facing == EnumFacing.EAST) {
-            rotationY = 90;
-        } else if (facing == EnumFacing.WEST) {
-            rotationY = -90;
-        } else if (facing == EnumFacing.UP) {
-            rotationX = -90;
-        } else if (facing == EnumFacing.DOWN) {
-            rotationX = 90;
+
+        switch (facing) {
+            //case SOUTH: rotationY = 0
+            case NORTH:
+                rotationY = 180;
+                break;
+            case EAST:
+                rotationY = 90;
+                break;
+            case WEST:
+                rotationY = -90;
+                break;
+            case UP:
+                rotationX = -90;
+                break;
+            case DOWN:
+                rotationX = 90;
         }
+
         GlStateManager.rotate(rotationY, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(rotationX, 1.0F, 0.0F, 0.0F);
     }
