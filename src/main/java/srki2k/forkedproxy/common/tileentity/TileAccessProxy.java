@@ -6,14 +6,12 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.helper.MinecraftHelpers;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
 import org.cyclops.cyclopscore.persist.nbt.NBTClassType;
 import org.cyclops.integrateddynamics.api.block.IDynamicRedstone;
-import org.cyclops.integrateddynamics.api.block.IVariableContainer;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.network.INetworkElement;
@@ -40,6 +38,7 @@ import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
 import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
 import srki2k.forkedproxy.common.id_network.AccessProxyNetworkElement;
 import srki2k.forkedproxy.common.packet.*;
+import srki2k.forkedproxy.util.Constants;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
@@ -58,7 +57,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     public final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator_z;
     public final InventoryVariableEvaluator<IValue> evaluator_display;
     private IValue display_value;
-    private final IVariableContainer variableContainer;
     private boolean shouldSendUpdateEvent = false;
 
     public DimPos target;
@@ -77,8 +75,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 return new AccessProxyNetworkElement(DimPos.of(world, blockPos));
             }
         });
-        this.variableContainer = new VariableContainerDefault();
-        this.addCapabilityInternal(VariableContainerConfig.CAPABILITY, this.variableContainer);
+        this.addCapabilityInternal(VariableContainerConfig.CAPABILITY, new VariableContainerDefault());
         this.evaluator_x = new InventoryVariableEvaluator<>(this, SLOT_X, ValueTypes.INTEGER);
         this.evaluator_y = new InventoryVariableEvaluator<>(this, SLOT_Y, ValueTypes.INTEGER);
         this.evaluator_z = new InventoryVariableEvaluator<>(this, SLOT_Z, ValueTypes.INTEGER);
@@ -110,8 +107,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         NBTClassType.writeNbt(List.class, "errors_display", evaluator_display.getErrors(), tag);
         tag.setIntArray("display_rotations", this.display_rotations);
         if (getDisplayValue() != null) {
-//            tag.setString("displayValueType", value.getType().getTranslationKey());
-//            tag.setString("displayValue", ValueHelpers.serializeRaw(value));
             tag.setTag("displayValue", ValueHelpers.serialize(getDisplayValue()));
         }
         tag.setIntArray("rs_power", this.redstone_powers);
@@ -130,18 +125,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         this.evaluator_z.setErrors(NBTClassType.readNbt(List.class, "errors_z", tag));
         this.evaluator_display.setErrors(NBTClassType.readNbt(List.class, "errors_display", tag));
         this.display_rotations = tag.getIntArray("display_rotations");
-//        if (tag.hasKey("displayValueType", MinecraftHelpers.NBTTag_Types.NBTTagString.ordinal()) && tag.hasKey("displayValue", MinecraftHelpers.NBTTag_Types.NBTTagString.ordinal())) {
-//            IValueType valueType = ValueTypes.REGISTRY.getValueType(tag.getString("displayValueType"));
-//            if (valueType != null) {
-//                String serializedValue = tag.getString("displayValue");
-//                L10NHelpers.UnlocalizedString deserializationError = valueType.canDeserialize(serializedValue);
-//                if (deserializationError == null) {
-//                    this.setDisplayValue(ValueHelpers.deserializeRaw(valueType, serializedValue));
-//                }
-//            }
-//        } else {
-//            this.setDisplayValue(null);
-//        }
         if (tag.hasKey("displayValue", MinecraftHelpers.NBTTag_Types.NBTTagCompound.ordinal())) {
             setDisplayValue(ValueHelpers.deserialize(tag.getCompoundTag("displayValue")));
         } else {
@@ -185,7 +168,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     protected void refreshVariables(boolean sendVariablesUpdateEvent) {
-//        this.variableContainer.refreshVariables(this.getNetwork(), this.inventory, sendVariablesUpdateEvent);
         this.evaluator_x.refreshVariable(getNetwork(), false);
         this.evaluator_y.refreshVariable(getNetwork(), false);
         this.evaluator_z.refreshVariable(getNetwork(), false);
@@ -237,10 +219,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             }
 
             if (!this.target.equals(old_target)) {
-//                markDirty();
                 if (old_target != null) notifyTargetChange();
                 ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-                //AccessProxyCollection.getInstance(this.world).set(this.pos, this.target.getBlockPos());
                 updateTargetBlock();
                 if (old_target != null) {
                     updateTargetBlock(this.world, old_target.getBlockPos());
@@ -409,10 +389,10 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     public static void refreshFacePartNetwork(World world, BlockPos pos) { //refresh the network of parts on the 6 face of access proxy block
-        if (Loader.isModLoaded("integratedtunnels")) {
+        if (Constants.isIntegratedTunnelsLoaded()) {
             for (EnumFacing offset : EnumFacing.VALUES) {
                 try {
-                    PartHelpers.PartStateHolder partStateHolder = PartHelpers.getPart(PartPos.of(world, pos.offset(offset), offset.getOpposite()));
+                    PartHelpers.PartStateHolder<?, ?> partStateHolder = PartHelpers.getPart(PartPos.of(world, pos.offset(offset), offset.getOpposite()));
                     if (partStateHolder != null && partStateHolder.getPart() instanceof PartTypeInterfacePositionedAddon) {
                         NetworkHelpers.initNetwork(world, pos.offset(offset), offset.getOpposite());
                     }
@@ -445,7 +425,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             if (event.getPos().equals(this.target.getBlockPos()) && event.getWorld().equals(this.target.getWorld())) {
                 notifyTargetChange();
             }
-        } catch (NullPointerException ignored) { }
+        } catch (NullPointerException ignored) {
+        }
     }
     //TODO:rs_writer, light_panel
 

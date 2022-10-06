@@ -1,13 +1,15 @@
 package srki2k.forkedproxy;
 
-import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +19,7 @@ import org.cyclops.cyclopscore.init.ItemCreativeTab;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.init.RecipeHandler;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
+import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
 import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
 import srki2k.forkedproxy.util.Constants;
 

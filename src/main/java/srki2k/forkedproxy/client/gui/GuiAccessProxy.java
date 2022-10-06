@@ -12,7 +12,7 @@ import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import srki2k.forkedproxy.client.data.AccessProxyClientData;
-import srki2k.forkedproxy.common.datamanegmant.ContainerAccessProxy;
+import srki2k.forkedproxy.common.container.ContainerAccessProxy;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProxy> {

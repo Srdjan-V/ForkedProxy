@@ -10,9 +10,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.cyclops.cyclopscore.config.extendedconfig.BlockConfig;
 import org.cyclops.cyclopscore.config.extendedconfig.ExtendedConfig;
 import org.cyclops.cyclopscore.datastructure.DimPos;
@@ -21,14 +18,10 @@ import org.cyclops.integrateddynamics.api.block.IDynamicRedstone;
 import org.cyclops.integrateddynamics.capability.dynamicredstone.DynamicRedstoneConfig;
 import org.cyclops.integrateddynamics.core.block.BlockContainerGuiCabled;
 import org.cyclops.integrateddynamics.core.helper.WrenchHelpers;
-import org.cyclops.integratedtunnels.core.ExtendedFakePlayer;
-import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.client.gui.GuiAccessProxy;
-import srki2k.forkedproxy.common.datamanegmant.ContainerAccessProxy;
+import srki2k.forkedproxy.common.container.ContainerAccessProxy;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
-import srki2k.forkedproxy.util.Constants;
 
-@Mod.EventBusSubscriber(modid = ForkedProxy.MODID)
 public class BlockAccessProxy extends BlockContainerGuiCabled {
 
     private static BlockAccessProxy _instance;
@@ -60,7 +53,6 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
     public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
         super.onBlockAdded(world, pos, state);
         if (!world.isRemote) {
-            //AccessProxyCollection.getInstance(world).set(pos, pos);
             TileAccessProxy te = (TileAccessProxy) world.getTileEntity(pos);
             if (te == null) {
                 return;
@@ -84,7 +76,6 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
             }
             te.sendRemoveRenderPacket();
             te.unRegisterEventHandle();
-            //AccessProxyCollection.getInstance(world).remove(pos);
             te.updateTargetBlock();
         }
         super.onPreBlockDestroyed(world, pos);
@@ -104,29 +95,25 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
                     ((TileAccessProxy) world.getTileEntity(pos)).changeDisableRender();
                     return true;
                 }
-                return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
             } else {
                 if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
                     ((TileAccessProxy) world.getTileEntity(pos)).rotateDisplayValue(side);
                     return true;
-                } else {
-                    return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
                 }
             }
-        } else {
-            if (!player.isSneaking()) {
-                if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
-                    return true;
-                } else {
-                    return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
-                }
+            return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
+        }
+
+        if (!player.isSneaking()) {
+            if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
+                return true;
             } else {
-                if (player.getHeldItem(hand).isEmpty()) {
-                    return true;
-                }
+                return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
             }
         }
-        return false;
+
+        return player.getHeldItem(hand).isEmpty();
+
     }
 
     @Override
@@ -153,13 +140,4 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
         return false;
     }
 
-    @SubscribeEvent
-    public static void onBlockBreakEvent(BlockEvent.BreakEvent event) {
-        if (!Constants.isIntegratedTunnelsLoaded()) return;
-        if (event.getWorld().getBlockState(event.getPos()).getBlock() instanceof BlockAccessProxy) {
-            if (event.getPlayer() instanceof ExtendedFakePlayer) {
-                event.setCanceled(true);
-            }
-        }
-    }
 }

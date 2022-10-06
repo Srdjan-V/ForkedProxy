@@ -26,7 +26,7 @@ public class AccessProxyNetworkElement extends TileNetworkElement<TileAccessProx
                 return false;
             }
             if (!partNetwork.addVariableContainer(getPos())) {
-                ForkedProxy.LOGGER.warn("The access proxy is already exist: " + getPos());
+                ForkedProxy.LOGGER.warn("The access proxy is already existing: " + getPos());
                 return false;
             }
             return true;
@@ -56,7 +56,6 @@ public class AccessProxyNetworkElement extends TileNetworkElement<TileAccessProx
 
     @Override
     public void setPriorityAndChannel(INetwork network, int priority, int channel) {
-
     }
 
     @Override

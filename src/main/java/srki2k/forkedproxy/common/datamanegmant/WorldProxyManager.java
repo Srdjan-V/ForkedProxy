@@ -10,10 +10,9 @@ import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.common.packet.*;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(modid = ForkedProxy.MODID)
 public class WorldProxyManager {
 
     private WorldProxyManager() {
@@ -46,8 +45,7 @@ public class WorldProxyManager {
         if (!event.player.world.isRemote) {
             for (TileAccessProxy proxy : existingTiles) {
                 ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
-                        new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()),
-                                proxy.target, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
+                        new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()), proxy.target, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
                         (EntityPlayerMP) event.player);
             }
         }

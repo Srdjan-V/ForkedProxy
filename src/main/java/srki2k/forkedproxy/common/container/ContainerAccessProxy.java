@@ -1,4 +1,4 @@
-package srki2k.forkedproxy.common.datamanegmant;
+package srki2k.forkedproxy.common.container;
 
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 import net.minecraft.entity.player.InventoryPlayer;
