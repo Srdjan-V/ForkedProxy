@@ -1,12 +1,11 @@
 package srki2k.forkedproxy.common.tileentity;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.helper.MinecraftHelpers;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
@@ -60,6 +59,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     private boolean shouldSendUpdateEvent = false;
 
     public DimPos target;
+
+    public Block targetBlock;
+
     public int pos_mode = 0;
     public int[] display_rotations = new int[]{0, 0, 0, 0, 0, 0};
     private int[] redstone_powers = new int[]{0, 0, 0, 0, 0, 0};
@@ -95,6 +97,34 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public boolean canExtractItem(int slot, ItemStack itemStack, EnumFacing side) {
         return false;
+    }
+
+
+    @Override
+    public boolean hasEventSubscriptions() {
+        return true;
+    }
+
+    @Override
+    public void onEvent(INetworkEvent event, AccessProxyNetworkElement networkElement) {
+        if (event instanceof VariableContentsUpdatedEvent) {
+            refreshVariables(false);
+            updateProxyTargetData();
+            sendUpdate();
+        }
+    }
+
+    @Override
+    public void afterNetworkReAlive() {
+        refreshVariables(true);
+        updateProxyTargetData();
+    }
+
+    @Override
+    public Set<Class<? extends INetworkEvent>> getSubscribedEvents() {
+        Set<Class<? extends INetworkEvent>> set = new HashSet<>();
+        set.add(VariableContentsUpdatedEvent.class);
+        return set;
     }
 
     @Override
@@ -143,6 +173,204 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         this.shouldSendUpdateEvent = true;
     }
 
+    @Override
+    public void onDirty() {
+        if (!this.world.isRemote) {
+            refreshVariables(true);
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!MinecraftHelpers.isClientSide()) {
+            this.shouldSendUpdateEvent = true;
+            WorldProxyManager.registerProxy(this);
+        }
+    }
+
+    private void updateProxyTargetData() {
+        if (!getWorld().isRemote) {
+            boolean isTargetUpdated = updateProxyTarget();
+            boolean isTargetBlockUpdated = updateProxyTargetDataBlock();
+
+            if (isTargetUpdated) {
+                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
+                notifyTargetChange();
+            }
+
+            if (isTargetUpdated || isTargetBlockUpdated) {
+                updateTargetBlock();
+                refreshFacePartNetwork();
+            }
+
+           // if (old_target != null) updateTargetBlock(this.world, old_target);
+
+        }
+    }
+
+    private boolean updateProxyTarget() {
+        DimPos old_target = target;
+        try {
+            if (this.pos_mode == 1) {
+                this.target = DimPos.of(
+                        this.world,
+                        new BlockPos(
+                                isVariableAvailable(this.evaluator_x) ? getVariableIntValue(this.evaluator_x) : this.pos.getX(),
+                                isVariableAvailable(this.evaluator_y) ? getVariableIntValue(this.evaluator_y) : this.pos.getY(),
+                                isVariableAvailable(this.evaluator_z) ? getVariableIntValue(this.evaluator_z) : this.pos.getZ()
+                        )
+                );
+            } else {
+                this.target = DimPos.of(
+                        this.world,
+                        new BlockPos(
+                                isVariableAvailable(this.evaluator_x) ? getVariableIntValue(this.evaluator_x) + this.pos.getX() : this.pos.getX(),
+                                isVariableAvailable(this.evaluator_y) ? getVariableIntValue(this.evaluator_y) + this.pos.getY() : this.pos.getY(),
+                                isVariableAvailable(this.evaluator_z) ? getVariableIntValue(this.evaluator_z) + this.pos.getZ() : this.pos.getZ()
+                        )
+                );
+            }
+        } catch (EvaluationException e) {
+            return false;
+        }
+
+        if (isTargetOutOfRange(this.target.getBlockPos())) {
+            return false;
+        }
+
+        return !this.target.equals(old_target);
+    }
+
+    private boolean updateProxyTargetDataBlock() {
+        Block old_target = targetBlock;
+        targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
+
+        return !targetBlock.equals(old_target);
+    }
+
+    private boolean isTargetOutOfRange(BlockPos target) {
+        if (BlockAccessProxyConfig.range < 0) {
+            return false;
+        }
+        return Math.abs(target.getX() - this.pos.getX()) > BlockAccessProxyConfig.range ||
+                Math.abs(target.getY() - this.pos.getY()) > BlockAccessProxyConfig.range ||
+                Math.abs(target.getZ() - this.pos.getZ()) > BlockAccessProxyConfig.range;
+    }
+
+    @Override
+    protected void updateTileEntity() {
+        super.updateTileEntity();
+        if (this.shouldSendUpdateEvent && this.getNetwork() != null) {
+            this.shouldSendUpdateEvent = false;
+            this.refreshVariables(true);
+        }
+        if (!world.isRemote) {
+            boolean is_dirty = false;
+            try {
+                IValue value = this.evaluator_display.getVariable(getNetwork()).getValue();
+                if (value != getDisplayValue()) {
+                    is_dirty = true;
+                }
+                setDisplayValue(value);
+            } catch (EvaluationException | NullPointerException e) {
+                if (this.display_value != null) {
+                    is_dirty = true;
+                }
+                setDisplayValue(null);
+            }
+            if (is_dirty) {
+                markDirty();
+                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
+            }
+
+            updateProxyTargetData();
+        }
+    }
+
+
+    public static void updateAfterBlockDestroy(World world, BlockPos pos) {
+        for (EnumFacing offset : EnumFacing.VALUES) {
+            world.neighborChanged(pos.offset(offset), BlockAccessProxy.getInstance(), pos);
+        }
+        refreshFacePartNetwork(world, pos);
+    }
+
+    public void notifyTargetChange() {
+        for (EnumFacing offset : EnumFacing.VALUES) {
+            this.world.neighborChanged(this.pos.offset(offset), getBlockType(), this.pos);
+        }
+        refreshFacePartNetwork();
+    }
+
+    public void updateTargetBlock(World world, DimPos target) {
+        if (target != null) {
+            BlockPos pos = target.getBlockPos();
+            if (!world.isBlockLoaded(pos)) return;
+
+            // TODO: 08/10/2022 see what this is doing
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                world.neighborChanged(pos, world.getBlockState(pos).getBlock(), pos.offset(facing));
+            }
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                if (world.getBlockState(pos.offset(facing)).getBlock() instanceof BlockAccessProxy) continue;
+                world.neighborChanged(pos.offset(facing), world.getBlockState(pos.offset(facing)).getBlock(), pos);
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //IntegratedTunnels
+
+    public static void refreshFacePartNetwork(World world, BlockPos pos) { //refresh the network of parts on the 6 face of access proxy block
+        if (Constants.isIntegratedTunnelsLoaded()) {
+            for (EnumFacing offset : EnumFacing.VALUES) {
+                try {
+                    PartHelpers.PartStateHolder<?, ?> partStateHolder = PartHelpers.getPart(PartPos.of(world, pos.offset(offset), offset.getOpposite()));
+                    if (partStateHolder != null && partStateHolder.getPart() instanceof PartTypeInterfacePositionedAddon) {
+                        NetworkHelpers.initNetwork(world, pos.offset(offset), offset.getOpposite());
+                    }
+                } catch (NullPointerException | ConcurrentModificationException ignored) {
+                }
+            }
+        }
+    }
+
+    public void refreshFacePartNetwork() { //refresh the network of parts on the 6 face of access proxy block
+        refreshFacePartNetwork(this.world, this.pos);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //ContainerAccessProxy
+    public boolean variableOk(InventoryVariableEvaluator<IValue> evaluator) {
+        if (evaluator.getVariable(getNetwork()) == null) {
+            return false;
+        }
+        return evaluator.hasVariable() &&
+                evaluator.getErrors().isEmpty();
+    }
+
+    public boolean variableIntegerOk(InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator) {
+        if (evaluator.getVariable(getNetwork()) == null) {
+            return false;
+        }
+        return evaluator.hasVariable() &&
+                evaluator.getVariable(getNetwork()).getType() instanceof ValueTypeInteger &&
+                evaluator.getErrors().isEmpty();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //BlockAccessProxy
+    public void unRegisterEventHandle() {
+        WorldProxyManager.unRegisterProxy(this);
+    }
+
+    public void updateTargetBlock() {
+        updateTargetBlock(this.world, this.target);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //ProxyRenderLogic
     public IValue getDisplayValue() {
         return this.display_value;
     }
@@ -167,6 +395,14 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisableRenderPacket(DimPos.of(this.world, this.pos), this.disable_render));
     }
 
+    public void sendRemoveRenderPacket() {
+        if (!this.world.isRemote) {
+            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new RemoveProxyRenderPacket(DimPos.of(this.world, this.pos)));
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //ID Logic
     protected void refreshVariables(boolean sendVariablesUpdateEvent) {
         this.evaluator_x.refreshVariable(getNetwork(), false);
         this.evaluator_y.refreshVariable(getNetwork(), false);
@@ -178,57 +414,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         return evaluator.getVariable(getNetwork()).getValue().cast(ValueTypes.INTEGER).getRawValue();
     }
 
-    private boolean isTargetOutOfRange(BlockPos target) {
-        if (BlockAccessProxyConfig.range < 0) {
-            return false;
-        }
-        return Math.abs(target.getX() - this.pos.getX()) > BlockAccessProxyConfig.range ||
-                Math.abs(target.getY() - this.pos.getY()) > BlockAccessProxyConfig.range ||
-                Math.abs(target.getZ() - this.pos.getZ()) > BlockAccessProxyConfig.range;
-    }
-
-    private void updateTargetPos() {
-        if (!getWorld().isRemote) {
-            DimPos old_target = this.target == null ? null : DimPos.of(this.target.getDimensionId(), this.target.getBlockPos());
-            try {
-                if (this.pos_mode == 1) {
-                    this.target = DimPos.of(
-                            this.world,
-                            new BlockPos(
-                                    isVariableAvailable(this.evaluator_x) ? getVariableIntValue(this.evaluator_x) : this.pos.getX(),
-                                    isVariableAvailable(this.evaluator_y) ? getVariableIntValue(this.evaluator_y) : this.pos.getY(),
-                                    isVariableAvailable(this.evaluator_z) ? getVariableIntValue(this.evaluator_z) : this.pos.getZ()
-                            )
-                    );
-                } else {
-                    this.target = DimPos.of(
-                            this.world,
-                            new BlockPos(
-                                    isVariableAvailable(this.evaluator_x) ? getVariableIntValue(this.evaluator_x) + this.pos.getX() : this.pos.getX(),
-                                    isVariableAvailable(this.evaluator_y) ? getVariableIntValue(this.evaluator_y) + this.pos.getY() : this.pos.getY(),
-                                    isVariableAvailable(this.evaluator_z) ? getVariableIntValue(this.evaluator_z) + this.pos.getZ() : this.pos.getZ()
-                            )
-                    );
-                }
-            } catch (EvaluationException e) {
-                this.target = DimPos.of(this.world, this.pos);
-            }
-
-            if (isTargetOutOfRange(this.target.getBlockPos())) {
-                this.target = DimPos.of(this.world, this.pos);
-            }
-
-            if (!this.target.equals(old_target)) {
-                if (old_target != null) notifyTargetChange();
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-                updateTargetBlock();
-                if (old_target != null) {
-                    updateTargetBlock(this.world, old_target.getBlockPos());
-                }
-            }
-        }
-    }
-
     private boolean isVariableAvailable(InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator) {
         if (evaluator.getVariable(getNetwork()) == null) {
             return false;
@@ -236,22 +421,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         return evaluator.hasVariable() && evaluator.getErrors().isEmpty();
     }
 
-    public boolean variableOk(InventoryVariableEvaluator<IValue> evaluator) {
-        if (evaluator.getVariable(getNetwork()) == null) {
-            return false;
-        }
-        return evaluator.hasVariable() &&
-                evaluator.getErrors().isEmpty();
-    }
-
-    public boolean variableIntegerOk(InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator) {
-        if (evaluator.getVariable(getNetwork()) == null) {
-            return false;
-        }
-        return evaluator.hasVariable() &&
-                evaluator.getVariable(getNetwork()).getType() instanceof ValueTypeInteger &&
-                evaluator.getErrors().isEmpty();
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Redstone
 
     public boolean setSideRedstonePower(EnumFacing side, IDynamicRedstone cap) {
         int[] old_strong = this.strong_powers.clone();
@@ -286,148 +457,5 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         }
         return power;
     }
-
-    @Override
-    public void onDirty() {
-        if (!this.world.isRemote) {
-            refreshVariables(true);
-        }
-    }
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        if (!MinecraftHelpers.isClientSide()) {
-            this.shouldSendUpdateEvent = true;
-            WorldProxyManager.registerProxy(this);
-        }
-    }
-
-    public void sendRemoveRenderPacket() {
-        if (!this.world.isRemote) {
-            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new RemoveProxyRenderPacket(DimPos.of(this.world, this.pos)));
-        }
-    }
-
-    public void unRegisterEventHandle() {
-        WorldProxyManager.unRegisterProxy(this);
-    }
-
-    @Override
-    protected void updateTileEntity() {
-        super.updateTileEntity();
-        if (this.shouldSendUpdateEvent && this.getNetwork() != null) {
-            this.shouldSendUpdateEvent = false;
-            this.refreshVariables(true);
-        }
-        if (!world.isRemote) {
-            boolean is_dirty = false;
-            try {
-                IValue value = this.evaluator_display.getVariable(getNetwork()).getValue();
-                if (value != getDisplayValue()) {
-                    is_dirty = true;
-                }
-                setDisplayValue(value);
-            } catch (EvaluationException | NullPointerException e) {
-                if (this.display_value != null) {
-                    is_dirty = true;
-                }
-                setDisplayValue(null);
-            }
-            if (is_dirty) {
-                markDirty();
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
-            }
-
-            updateTargetPos();
-        }
-    }
-
-    @Override
-    public void afterNetworkReAlive() {
-        refreshVariables(true);
-        updateTargetPos();
-    }
-
-    @Override
-    public boolean hasEventSubscriptions() {
-        return true;
-    }
-
-    @Override
-    public Set<Class<? extends INetworkEvent>> getSubscribedEvents() {
-        Set<Class<? extends INetworkEvent>> set = new HashSet<>();
-        set.add(VariableContentsUpdatedEvent.class);
-        return set;
-    }
-
-    @Override
-    public void onEvent(INetworkEvent event, AccessProxyNetworkElement networkElement) {
-        if (event instanceof VariableContentsUpdatedEvent) {
-            refreshVariables(false);
-            updateTargetPos();
-            sendUpdate();
-        }
-    }
-
-    public static void updateAfterBlockDestroy(World world, BlockPos pos) {
-        for (EnumFacing offset : EnumFacing.VALUES) {
-            world.neighborChanged(pos.offset(offset), BlockAccessProxy.getInstance(), pos);
-        }
-        refreshFacePartNetwork(world, pos);
-    }
-
-    public void notifyTargetChange() {
-        for (EnumFacing offset : EnumFacing.VALUES) {
-            this.world.neighborChanged(this.pos.offset(offset), getBlockType(), this.pos);
-        }
-        refreshFacePartNetwork();
-    }
-
-    public void refreshFacePartNetwork() { //refresh the network of parts on the 6 face of access proxy block
-        refreshFacePartNetwork(this.world, this.pos);
-    }
-
-    public static void refreshFacePartNetwork(World world, BlockPos pos) { //refresh the network of parts on the 6 face of access proxy block
-        if (Constants.isIntegratedTunnelsLoaded()) {
-            for (EnumFacing offset : EnumFacing.VALUES) {
-                try {
-                    PartHelpers.PartStateHolder<?, ?> partStateHolder = PartHelpers.getPart(PartPos.of(world, pos.offset(offset), offset.getOpposite()));
-                    if (partStateHolder != null && partStateHolder.getPart() instanceof PartTypeInterfacePositionedAddon) {
-                        NetworkHelpers.initNetwork(world, pos.offset(offset), offset.getOpposite());
-                    }
-                } catch (NullPointerException | ConcurrentModificationException ignored) {
-                }
-            }
-        }
-    }
-
-    public void updateTargetBlock(World world, BlockPos pos) {
-        if (!world.isBlockLoaded(pos)) return;
-        for (EnumFacing facing : EnumFacing.VALUES) {
-            world.neighborChanged(pos, world.getBlockState(pos).getBlock(), pos.offset(facing));
-        }
-        for (EnumFacing facing : EnumFacing.VALUES) {
-            if (world.getBlockState(pos.offset(facing)).getBlock() instanceof BlockAccessProxy) continue;
-            world.neighborChanged(pos.offset(facing), world.getBlockState(pos.offset(facing)).getBlock(), pos);
-        }
-    }
-
-    public void updateTargetBlock() {
-        if (this.target != null) {
-            updateTargetBlock(this.world, this.target.getBlockPos());
-        }
-    }
-
-    @SubscribeEvent
-    public void onTargetChanged(BlockEvent.NeighborNotifyEvent event) {
-        try {
-            if (event.getPos().equals(this.target.getBlockPos()) && event.getWorld().equals(this.target.getWorld())) {
-                notifyTargetChange();
-            }
-        } catch (NullPointerException ignored) {
-        }
-    }
-    //TODO:rs_writer, light_panel
 
 }
