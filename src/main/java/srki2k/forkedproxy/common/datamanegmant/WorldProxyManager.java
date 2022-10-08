@@ -20,18 +20,28 @@ public class WorldProxyManager {
 
     private static final Set<TileAccessProxy> existingTiles = new HashSet<>();
 
+    private static final Set<TileAccessProxy> connectedRedstoneTiles = new HashSet<>();
+
+
     public static void registerProxy(TileAccessProxy proxy) {
         existingTiles.add(proxy);
+    }
+
+    public static void registerRedstoneProxy(TileAccessProxy proxy) {
+        connectedRedstoneTiles.add(proxy);
     }
 
     public static void unRegisterProxy(TileAccessProxy proxy) {
         existingTiles.remove(proxy);
     }
 
+    public static void unRegisterRedstoneProxy(TileAccessProxy proxy) {
+        connectedRedstoneTiles.remove(proxy);
+    }
 
-    public static TileAccessProxy getProxiesFromTarget(BlockPos target) {
-        for (TileAccessProxy p : existingTiles) {
-            if (p.target.getBlockPos().equals(target)) {
+    public static TileAccessProxy getRedstoneProxiesFromTarget(int dim, BlockPos target) {
+        for (TileAccessProxy p : connectedRedstoneTiles) {
+            if (p.getWorld().provider.getDimension() == dim && p.target.getBlockPos().equals(target)) {
                 return p;
             }
         }
@@ -53,5 +63,6 @@ public class WorldProxyManager {
 
     public static void cleanExistingTiles() {
         existingTiles.clear();
+        connectedRedstoneTiles.clear();
     }
 }

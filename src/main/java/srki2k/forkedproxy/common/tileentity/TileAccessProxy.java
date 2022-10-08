@@ -1,6 +1,7 @@
 package srki2k.forkedproxy.common.tileentity;
 
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -66,6 +67,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     public int[] display_rotations = new int[]{0, 0, 0, 0, 0, 0};
     private int[] redstone_powers = new int[]{0, 0, 0, 0, 0, 0};
     private int[] strong_powers = new int[]{0, 0, 0, 0, 0, 0};
+
+    public boolean isRedstoneProxy;
+
     public boolean disable_render = false;
 
     public TileAccessProxy() {
@@ -142,6 +146,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         tag.setIntArray("rs_power", this.redstone_powers);
         tag.setIntArray("strong_power", this.strong_powers);
         tag.setBoolean("disable_render", this.disable_render);
+        tag.setBoolean("isRedstoneProxy", this.isRedstoneProxy);
 
         return tag;
     }
@@ -160,15 +165,10 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         } else {
             setDisplayValue(null);
         }
-        if (tag.hasKey("rs_power")) {
-            this.redstone_powers = tag.getIntArray("rs_power");
-        }
-        if (tag.hasKey("strong_power")) {
-            this.strong_powers = tag.getIntArray("strong_power");
-        }
-        if (tag.hasKey("disable_render")) {
-            this.disable_render = tag.getBoolean("disable_render");
-        }
+        this.redstone_powers = tag.getIntArray("rs_power");
+        this.strong_powers = tag.getIntArray("strong_power");
+        this.disable_render = tag.getBoolean("disable_render");
+        this.isRedstoneProxy = tag.getBoolean("isRedstoneProxy");
 
         this.shouldSendUpdateEvent = true;
     }
@@ -204,7 +204,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 refreshFacePartNetwork();
             }
 
-           // if (old_target != null) updateTargetBlock(this.world, old_target);
+            // if (old_target != null) updateTargetBlock(this.world, old_target);
 
         }
     }
@@ -243,10 +243,20 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private boolean updateProxyTargetDataBlock() {
-        Block old_target = targetBlock;
-        targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
+        Block old_target = this.targetBlock;
+        this.targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
 
-        return !targetBlock.equals(old_target);
+        if (Blocks.REDSTONE_WIRE.equals(this.targetBlock)) {
+            if (!this.isRedstoneProxy) {
+                WorldProxyManager.registerRedstoneProxy(this);
+                isRedstoneProxy = true;
+            }
+        } else if (Blocks.REDSTONE_WIRE.equals(old_target) && (this.isRedstoneProxy)) {
+            WorldProxyManager.unRegisterRedstoneProxy(this);
+            isRedstoneProxy = false;
+        }
+
+        return !this.targetBlock.equals(old_target);
     }
 
     private boolean isTargetOutOfRange(BlockPos target) {
@@ -363,6 +373,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     //BlockAccessProxy
     public void unRegisterEventHandle() {
         WorldProxyManager.unRegisterProxy(this);
+        WorldProxyManager.unRegisterRedstoneProxy(this);
     }
 
     public void updateTargetBlock() {
