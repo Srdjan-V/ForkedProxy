@@ -20,6 +20,7 @@ import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.init.RecipeHandler;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
+import srki2k.forkedproxy.common.compat.integratedtunnels.IntegratedTunnelsCompat;
 import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
 import srki2k.forkedproxy.util.Constants;
 
@@ -57,6 +58,7 @@ public class ForkedProxy extends ModBase {
     public final void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
         Constants.init();
+        IntegratedTunnelsCompat.init();
     }
 
     @Override
