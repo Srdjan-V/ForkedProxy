@@ -21,6 +21,14 @@ public class AccessProxyClientData {
         return _instance;
     }
 
+
+    public void putAll(DimPos proxy, DimPos target, boolean disable, int[] rotation, IValue value) {
+        this.target_map.put(proxy, target);
+        this.disable_map.put(proxy, disable);
+        this.rotation_map.put(proxy, rotation);
+        this.variable_map.put(proxy, value);
+    }
+
     public void putTarget(DimPos proxy, DimPos target) {
         this.target_map.put(proxy, target);
     }
@@ -36,6 +44,7 @@ public class AccessProxyClientData {
     public void putDisable(DimPos proxy, boolean disable) {
         this.disable_map.put(proxy, disable);
     }
+
 
     public void remove(DimPos proxy) {
         this.target_map.remove(proxy);

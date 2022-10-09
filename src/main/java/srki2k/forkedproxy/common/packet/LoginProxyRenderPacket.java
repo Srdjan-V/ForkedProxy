@@ -60,19 +60,18 @@ public class LoginProxyRenderPacket extends PacketCodec {
     public void actionClient(World world, EntityPlayer player) {
         AccessProxyClientData accessProxyClientData = AccessProxyClientData.getInstance();
 
-        accessProxyClientData.putTarget(
-                DimPos.of(this.proxy_dim, this.proxy_pos),
-                DimPos.of(this.target_dim, this.target_pos)
-        );
+        IValue variable = null;
 
-        accessProxyClientData.putRotation(DimPos.of(this.proxy_dim, this.proxy_pos), this.rotation.getIntArray("rot"));
-        accessProxyClientData.putDisable(DimPos.of(this.proxy_dim, this.proxy_pos), this.disable);
-
-        if (nbt.isEmpty()) {
-            accessProxyClientData.putVariable(DimPos.of(this.proxy_dim, this.proxy_pos), null);
-            return;
+        if (!nbt.isEmpty()) {
+            variable = ValueHelpers.deserialize(nbt);
         }
-        accessProxyClientData.putVariable(DimPos.of(this.proxy_dim, this.proxy_pos), ValueHelpers.deserialize(nbt));
+
+        accessProxyClientData.putAll(
+                DimPos.of(this.proxy_dim, this.proxy_pos),
+                DimPos.of(this.target_dim, this.target_pos),
+                this.disable,
+                this.rotation.getIntArray("rot"),
+                variable);
 
     }
 

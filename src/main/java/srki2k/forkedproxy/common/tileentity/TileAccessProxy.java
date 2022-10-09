@@ -1,7 +1,6 @@
 package srki2k.forkedproxy.common.tileentity;
 
 import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -14,6 +13,7 @@ import org.cyclops.cyclopscore.persist.nbt.NBTClassType;
 import org.cyclops.integrateddynamics.api.block.IDynamicRedstone;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.network.INetworkElement;
 import org.cyclops.integrateddynamics.api.network.INetworkEventListener;
 import org.cyclops.integrateddynamics.api.network.event.INetworkEvent;
@@ -68,8 +68,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     private int[] redstone_powers = new int[]{0, 0, 0, 0, 0, 0};
     private int[] strong_powers = new int[]{0, 0, 0, 0, 0, 0};
 
-    public boolean isRedstoneProxy;
-
     public boolean disable_render = false;
 
     public TileAccessProxy() {
@@ -121,7 +119,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public void afterNetworkReAlive() {
         refreshVariables(true);
-        updateProxyTargetData();
     }
 
     @Override
@@ -146,7 +143,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         tag.setIntArray("rs_power", this.redstone_powers);
         tag.setIntArray("strong_power", this.strong_powers);
         tag.setBoolean("disable_render", this.disable_render);
-        tag.setBoolean("isRedstoneProxy", this.isRedstoneProxy);
 
         return tag;
     }
@@ -168,7 +164,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         this.redstone_powers = tag.getIntArray("rs_power");
         this.strong_powers = tag.getIntArray("strong_power");
         this.disable_render = tag.getBoolean("disable_render");
-        this.isRedstoneProxy = tag.getBoolean("isRedstoneProxy");
 
         this.shouldSendUpdateEvent = true;
     }
@@ -191,26 +186,27 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     private void updateProxyTargetData() {
         if (!getWorld().isRemote) {
-            boolean isTargetUpdated = updateProxyTarget();
-            boolean isTargetBlockUpdated = updateProxyTargetDataBlock();
 
-            if (isTargetUpdated) {
+            boolean isDisplayDirty = isDisplayDirty();
+            boolean updateProxyTarget = updateProxyTarget();
+
+            if (isDisplayDirty) {
+                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
+            }
+
+            if (updateProxyTarget) {
                 ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-                notifyTargetChange();
             }
 
-            if (isTargetUpdated || isTargetBlockUpdated) {
-                updateTargetBlock();
-                refreshFacePartNetwork();
+            if (isDisplayDirty || updateProxyTarget) {
+                markDirty();
             }
-
-            // if (old_target != null) updateTargetBlock(this.world, old_target);
-
         }
     }
 
     private boolean updateProxyTarget() {
         DimPos old_target = target;
+        boolean isDirty = false;
         try {
             if (this.pos_mode == 1) {
                 this.target = DimPos.of(
@@ -232,31 +228,35 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 );
             }
         } catch (EvaluationException e) {
-            return false;
+            this.target = DimPos.of(this.world, this.pos);
+            isDirty = true;
         }
 
         if (isTargetOutOfRange(this.target.getBlockPos())) {
-            return false;
+            this.target = DimPos.of(this.world, this.pos);
+            isDirty = true;
         }
 
-        return !this.target.equals(old_target);
+        if (!this.target.equals(old_target)) {
+            isDirty = true;
+            updateTargetBlock(old_target);
+            updateTargetBlock(target);
+        }
+        return isDirty;
     }
 
-    private boolean updateProxyTargetDataBlock() {
+    private void updateProxyTargetDataBlock() {
         Block old_target = this.targetBlock;
         this.targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
 
-        if (Blocks.REDSTONE_WIRE.equals(this.targetBlock)) {
-            if (!this.isRedstoneProxy) {
-                WorldProxyManager.registerRedstoneProxy(this);
-                isRedstoneProxy = true;
-            }
-        } else if (Blocks.REDSTONE_WIRE.equals(old_target) && (this.isRedstoneProxy)) {
-            WorldProxyManager.unRegisterRedstoneProxy(this);
-            isRedstoneProxy = false;
+        if (targetBlock.equals(BlockAccessProxy.getInstance())) {
+            return;
         }
 
-        return !this.targetBlock.equals(old_target);
+        if (!this.targetBlock.equals(old_target)) {
+            updateTargetBlock();
+            notifyTargetChange();
+        }
     }
 
     private boolean isTargetOutOfRange(BlockPos target) {
@@ -275,36 +275,30 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             this.shouldSendUpdateEvent = false;
             this.refreshVariables(true);
         }
-        if (!world.isRemote) {
-            boolean is_dirty = false;
-            try {
-                IValue value = this.evaluator_display.getVariable(getNetwork()).getValue();
-                if (value != getDisplayValue()) {
-                    is_dirty = true;
+        updateProxyTargetData();
+    }
+
+    private boolean isDisplayDirty() {
+        IVariable<IValue> variable = this.evaluator_display.getVariable(getNetwork());
+        try {
+            if (variable != null) {
+                IValue value = variable.getValue();
+                if (value == getDisplayValue()) {
+                    return false;
                 }
                 setDisplayValue(value);
-            } catch (EvaluationException | NullPointerException e) {
-                if (this.display_value != null) {
-                    is_dirty = true;
-                }
+            } else if (getDisplayValue() != null) {
                 setDisplayValue(null);
             }
-            if (is_dirty) {
-                markDirty();
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
-            }
 
-            updateProxyTargetData();
+        } catch (EvaluationException ignored) {
+            setDisplayValue(null);
         }
+
+        return true;
     }
 
 
-    public static void updateAfterBlockDestroy(World world, BlockPos pos) {
-        for (EnumFacing offset : EnumFacing.VALUES) {
-            world.neighborChanged(pos.offset(offset), BlockAccessProxy.getInstance(), pos);
-        }
-        refreshFacePartNetwork(world, pos);
-    }
 
     public void notifyTargetChange() {
         for (EnumFacing offset : EnumFacing.VALUES) {
@@ -313,21 +307,22 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         refreshFacePartNetwork();
     }
 
-    public void updateTargetBlock(World world, DimPos target) {
+    public void updateTargetBlock(DimPos target) {
         if (target != null) {
             BlockPos pos = target.getBlockPos();
-            if (!world.isBlockLoaded(pos)) return;
+            if (!this.world.isBlockLoaded(pos)) return;
 
             // TODO: 08/10/2022 see what this is doing
             for (EnumFacing facing : EnumFacing.VALUES) {
-                world.neighborChanged(pos, world.getBlockState(pos).getBlock(), pos.offset(facing));
+                this.world.neighborChanged(pos, this.world.getBlockState(pos).getBlock(), pos.offset(facing));
             }
             for (EnumFacing facing : EnumFacing.VALUES) {
-                if (world.getBlockState(pos.offset(facing)).getBlock() instanceof BlockAccessProxy) continue;
-                world.neighborChanged(pos.offset(facing), world.getBlockState(pos.offset(facing)).getBlock(), pos);
+                if (this.world.getBlockState(pos.offset(facing)).getBlock() instanceof BlockAccessProxy) continue;
+                this.world.neighborChanged(pos.offset(facing), this.world.getBlockState(pos.offset(facing)).getBlock(), pos);
             }
         }
     }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //IntegratedTunnels
@@ -373,11 +368,17 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     //BlockAccessProxy
     public void unRegisterEventHandle() {
         WorldProxyManager.unRegisterProxy(this);
-        WorldProxyManager.unRegisterRedstoneProxy(this);
     }
 
     public void updateTargetBlock() {
-        updateTargetBlock(this.world, this.target);
+        updateTargetBlock(this.target);
+    }
+
+    public static void updateAfterBlockDestroy(World world, BlockPos pos) {
+        for (EnumFacing offset : EnumFacing.VALUES) {
+            world.neighborChanged(pos.offset(offset), BlockAccessProxy.getInstance(), pos);
+        }
+        refreshFacePartNetwork(world, pos);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,9 +416,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //ID Logic
     protected void refreshVariables(boolean sendVariablesUpdateEvent) {
-        this.evaluator_x.refreshVariable(getNetwork(), false);
-        this.evaluator_y.refreshVariable(getNetwork(), false);
-        this.evaluator_z.refreshVariable(getNetwork(), false);
+        this.evaluator_x.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        this.evaluator_y.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        this.evaluator_z.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
         this.evaluator_display.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
     }
 

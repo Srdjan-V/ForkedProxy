@@ -1,16 +1,16 @@
 package srki2k.forkedproxy.common.datamanegmant;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import srki2k.forkedproxy.ForkedProxy;
-import srki2k.forkedproxy.common.packet.*;
+import srki2k.forkedproxy.common.packet.LoginProxyRenderPacket;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = ForkedProxy.MODID)
 public class WorldProxyManager {
@@ -20,35 +20,24 @@ public class WorldProxyManager {
 
     private static final Set<TileAccessProxy> existingTiles = new HashSet<>();
 
-    private static final Set<TileAccessProxy> connectedRedstoneTiles = new HashSet<>();
-
 
     public static void registerProxy(TileAccessProxy proxy) {
         existingTiles.add(proxy);
-    }
-
-    public static void registerRedstoneProxy(TileAccessProxy proxy) {
-        connectedRedstoneTiles.add(proxy);
     }
 
     public static void unRegisterProxy(TileAccessProxy proxy) {
         existingTiles.remove(proxy);
     }
 
-    public static void unRegisterRedstoneProxy(TileAccessProxy proxy) {
-        connectedRedstoneTiles.remove(proxy);
-    }
-
-    public static TileAccessProxy getRedstoneProxiesFromTarget(int dim, BlockPos target) {
-        for (TileAccessProxy p : connectedRedstoneTiles) {
-            if (p.getWorld().provider.getDimension() == dim && p.target.getBlockPos().equals(target)) {
+    public static TileAccessProxy getRedstoneProxiesFromTarget(DimPos target) {
+        for (TileAccessProxy p : existingTiles) {
+            if (target.equals(p.target)) {
                 return p;
             }
         }
 
         return null;
     }
-
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -63,6 +52,5 @@ public class WorldProxyManager {
 
     public static void cleanExistingTiles() {
         existingTiles.clear();
-        connectedRedstoneTiles.clear();
     }
 }

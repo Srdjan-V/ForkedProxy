@@ -4,6 +4,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
+import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,7 +22,7 @@ public abstract class MixinWorldRedstone {
 
     @Inject(at = @At("RETURN"), method = "getRedstonePower(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I", cancellable = true)
     public void getRedstonePower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
-        TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
+        TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(DimPos.of(provider.getDimension(), pos.offset(facing.getOpposite())));
         if (proxy == null) {
             return;
         }
@@ -34,7 +35,7 @@ public abstract class MixinWorldRedstone {
 
     @Inject(at = @At("RETURN"), method = "getStrongPower(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I", cancellable = true)
     public void getStrongPower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
-        TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
+        TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(DimPos.of(provider.getDimension(), pos.offset(facing.getOpposite())));
         if (proxy == null) {
             return;
         }

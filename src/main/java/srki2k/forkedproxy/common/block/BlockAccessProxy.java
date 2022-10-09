@@ -57,7 +57,6 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
             if (te == null) {
                 return;
             }
-            te.target = DimPos.of(world, pos);
             for (EnumFacing facing : EnumFacing.values()) {
                 if (te.target != null && world.isBlockLoaded(te.target.getBlockPos()) && !te.isInvalid()) {
                     IDynamicRedstone cap = TileHelpers.getCapability(DimPos.of(world, pos.offset(facing)), facing.getOpposite(), DynamicRedstoneConfig.CAPABILITY);
@@ -122,7 +121,7 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
         if (neighborBlock instanceof BlockAccessProxy) {
             return;
         }
-        if (pos.getY() == fromPos.getY() && !world.isRemote) {
+        if (!world.isRemote) {
             Vec3i facing_vec = fromPos.subtract(new Vec3i(pos.getX(), pos.getY(), pos.getZ()));
             EnumFacing facing = EnumFacing.getFacingFromVector(facing_vec.getX(), facing_vec.getY(), facing_vec.getZ());
             TileAccessProxy te = (TileAccessProxy) world.getTileEntity(pos);
