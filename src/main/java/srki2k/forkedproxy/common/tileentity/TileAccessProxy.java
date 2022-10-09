@@ -190,23 +190,36 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             boolean isDisplayDirty = isDisplayDirty();
             boolean updateProxyTarget = updateProxyTarget();
 
-            if (isDisplayDirty) {
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
-            }
-
-            if (updateProxyTarget) {
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-            }
-
             if (isDisplayDirty || updateProxyTarget) {
                 markDirty();
             }
         }
     }
+    private boolean isDisplayDirty() {
+        IVariable<IValue> variable = this.evaluator_display.getVariable(getNetwork());
+        try {
+            if (variable != null) {
+                IValue value = variable.getValue();
+                if (value == getDisplayValue()) {
+                    return false;
+                }
+                setDisplayValue(value);
+            } else if (getDisplayValue() != null) {
+                setDisplayValue(null);
+            }
+
+        } catch (EvaluationException ignored) {
+            setDisplayValue(null);
+        }
+
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(this.world, this.pos), getDisplayValue()));
+        return true;
+    }
 
     private boolean updateProxyTarget() {
-        DimPos old_target = target;
+        DimPos oldTarget = this.target;
         boolean isDirty = false;
+
         try {
             if (this.pos_mode == 1) {
                 this.target = DimPos.of(
@@ -237,26 +250,26 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             isDirty = true;
         }
 
-        if (!this.target.equals(old_target)) {
+        boolean targetChanged = !this.target.equals(oldTarget);
+
+        if (targetChanged) {
             isDirty = true;
-            updateTargetBlock(old_target);
-            updateTargetBlock(target);
+            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
+            updateTargetBlock(oldTarget);
         }
-        return isDirty;
-    }
 
-    private void updateProxyTargetDataBlock() {
-        Block old_target = this.targetBlock;
+        Block oldBlockTarget = this.targetBlock;
+
         this.targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
-
-        if (targetBlock.equals(BlockAccessProxy.getInstance())) {
-            return;
-        }
-
-        if (!this.targetBlock.equals(old_target)) {
-            updateTargetBlock();
+        if (targetChanged || !this.targetBlock.equals(oldBlockTarget)) {
+            if (!targetBlock.equals(BlockAccessProxy.getInstance())) {
+                updateTargetBlock(target);
+            }
             notifyTargetChange();
+            isDirty = true;
         }
+
+        return isDirty;
     }
 
     private boolean isTargetOutOfRange(BlockPos target) {
@@ -277,28 +290,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         }
         updateProxyTargetData();
     }
-
-    private boolean isDisplayDirty() {
-        IVariable<IValue> variable = this.evaluator_display.getVariable(getNetwork());
-        try {
-            if (variable != null) {
-                IValue value = variable.getValue();
-                if (value == getDisplayValue()) {
-                    return false;
-                }
-                setDisplayValue(value);
-            } else if (getDisplayValue() != null) {
-                setDisplayValue(null);
-            }
-
-        } catch (EvaluationException ignored) {
-            setDisplayValue(null);
-        }
-
-        return true;
-    }
-
-
 
     public void notifyTargetChange() {
         for (EnumFacing offset : EnumFacing.VALUES) {
