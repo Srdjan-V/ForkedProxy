@@ -195,19 +195,22 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             }
         }
     }
+
     private boolean isDisplayDirty() {
         IVariable<IValue> variable = this.evaluator_display.getVariable(getNetwork());
         try {
-            if (variable != null) {
-                IValue value = variable.getValue();
-                if (value == getDisplayValue()) {
+            if (variable == null) {
+                if (getDisplayValue() == null) {
                     return false;
                 }
-                setDisplayValue(value);
-            } else if (getDisplayValue() != null) {
-                setDisplayValue(null);
             }
 
+            IValue value = variable.getValue();
+            if (value == getDisplayValue()){
+                return false;
+            }
+
+            setDisplayValue(value);
         } catch (EvaluationException ignored) {
             setDisplayValue(null);
         }

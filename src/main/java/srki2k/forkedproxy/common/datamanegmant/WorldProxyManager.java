@@ -43,9 +43,18 @@ public class WorldProxyManager {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.player.world.isRemote) {
             for (TileAccessProxy proxy : existingTiles) {
+                if (proxy.target == null) {
+                    DimPos proxyPosTarget = DimPos.of(proxy.getWorld(), proxy.getPos());
+                    ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
+                            new LoginProxyRenderPacket(proxyPosTarget, proxyPosTarget, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
+                            (EntityPlayerMP) event.player);
+                    continue;
+                }
+
                 ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
                         new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()), proxy.target, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
                         (EntityPlayerMP) event.player);
+
             }
         }
     }

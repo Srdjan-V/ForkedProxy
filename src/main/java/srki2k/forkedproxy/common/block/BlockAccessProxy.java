@@ -73,8 +73,6 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
             if (te == null) {
                 return;
             }
-            te.target = DimPos.of(world, pos);
-            te.targetBlock = BlockAccessProxy.getInstance();
             te.sendRemoveRenderPacket();
             te.unRegisterEventHandle();
             te.updateTargetBlock();
