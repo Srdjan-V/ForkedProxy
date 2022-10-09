@@ -217,7 +217,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private boolean updateProxyTarget() {
-        DimPos oldTarget = this.target;
+        DimPos oldTarget = this.target == null ? null : DimPos.of(this.target.getDimensionId(), this.target.getBlockPos());
         boolean isDirty = false;
 
         try {
@@ -259,12 +259,17 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         }
 
         Block oldBlockTarget = this.targetBlock;
-
         this.targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
-        if (targetChanged || !this.targetBlock.equals(oldBlockTarget)) {
-            if (!targetBlock.equals(BlockAccessProxy.getInstance())) {
+
+        boolean blockTargetChanged = !this.targetBlock.equals(oldBlockTarget);
+
+        if (!this.targetBlock.equals(oldBlockTarget)) {
+            if (!BlockAccessProxy.getInstance().equals(this.targetBlock)) {
                 updateTargetBlock(target);
             }
+        }
+
+        if (targetChanged || blockTargetChanged) {
             notifyTargetChange();
             isDirty = true;
         }
