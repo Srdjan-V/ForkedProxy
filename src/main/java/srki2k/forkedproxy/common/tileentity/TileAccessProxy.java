@@ -44,6 +44,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class TileAccessProxy extends TileCableConnectableInventory implements IDirtyMarkListener, INetworkEventListener<AccessProxyNetworkElement> {
 
@@ -88,6 +89,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         this.evaluator_y = new InventoryVariableEvaluator<>(this, SLOT_Y, ValueTypes.INTEGER);
         this.evaluator_z = new InventoryVariableEvaluator<>(this, SLOT_Z, ValueTypes.INTEGER);
         this.evaluator_display = new InventoryVariableEvaluator<>(this, SLOT_DISPLAY, ValueTypes.CATEGORY_ANY);
+
+        tickCounter = ThreadLocalRandom.current().nextInt(BlockAccessProxyConfig.blockUpdateTicks);
     }
 
     @Override
@@ -261,14 +264,13 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private boolean updateProxyTarget() {
-        boolean haveVariablesUpdated = haveVariablesUpdated();
         boolean targetChanged = false;
         boolean blockTargetChanged = false;
         boolean isDirty = false;
 
         Block oldBlockTarget = this.targetBlock;
 
-        if (haveVariablesUpdated) {
+        if (haveVariablesUpdated()) {
             DimPos oldTarget = this.target == null ? null : DimPos.of(this.target.getDimensionId(), this.target.getBlockPos());
             if (this.pos_mode == 1) {
                 this.target = DimPos.of(this.world, new BlockPos(variableX, variableY, variableZ));
