@@ -43,6 +43,7 @@ public class WorldProxyManager {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.player.world.isRemote) {
             for (TileAccessProxy proxy : existingTiles) {
+                //Checking for null why don't know, but this fixes NPEs
                 if (proxy.target == null) {
                     DimPos proxyPosTarget = DimPos.of(proxy.getWorld(), proxy.getPos());
                     ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(

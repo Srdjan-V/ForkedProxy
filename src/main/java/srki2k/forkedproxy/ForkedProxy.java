@@ -97,7 +97,9 @@ public class ForkedProxy extends ModBase {
     public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
         if (event.getModID().equals(MODID)) {
             ConfigManager.sync(MODID, Config.Type.INSTANCE);
-            LOGGER.info("Changed config: range: " + BlockAccessProxyConfig.range);
+            LOGGER.info("Changed config:");
+            LOGGER.info("Range: " + BlockAccessProxyConfig.range);
+            LOGGER.info("blockUpdateTicks: " + BlockAccessProxyConfig.blockUpdateTicks);
         }
     }
 }

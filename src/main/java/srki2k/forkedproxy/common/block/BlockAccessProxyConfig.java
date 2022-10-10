@@ -12,12 +12,18 @@ public class BlockAccessProxyConfig extends BlockContainerConfig {
     public static BlockAccessProxyConfig _instance;
 
     @ConfigurableProperty(
-            category = ConfigurableTypeCategory.BLOCK,
+            category = ConfigurableTypeCategory.GENERAL,
             comment = "The max range of access proxy (square range, not radius), -1:infinite",
             isCommandable = true,
             minimalValue = -1,
             maximalValue = Integer.MAX_VALUE - 1)
     public static int range = -1;
+
+    @ConfigurableProperty(
+            category = ConfigurableTypeCategory.GENERAL,
+            comment = "Delay in ticks for block update checks, default 20",
+            isCommandable = true)
+    public static int blockUpdateTicks = 20;
 
     public BlockAccessProxyConfig() {
         super(
