@@ -15,16 +15,17 @@ public class BlockAccessProxyConfig extends BlockContainerConfig {
             category = ConfigurableTypeCategory.BLOCK,
             comment = "The max range of access proxy (square range, not radius), -1:infinite",
             isCommandable = true,
-            minimalValue = -1)
+            minimalValue = -1,
+            maximalValue = Integer.MAX_VALUE - 1)
     public static int range = -1;
 
     public BlockAccessProxyConfig() {
         super(
-            ForkedProxy.INSTANCE,
-            true,
-            "access_proxy",
-            null,
-            BlockAccessProxy.class
+                ForkedProxy.INSTANCE,
+                true,
+                "access_proxy",
+                null,
+                BlockAccessProxy.class
         );
     }
 
