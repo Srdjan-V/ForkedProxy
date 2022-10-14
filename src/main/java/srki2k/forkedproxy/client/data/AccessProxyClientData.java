@@ -4,98 +4,89 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 
 import java.util.HashMap;
 
+@SideOnly(Side.CLIENT)
 public class AccessProxyClientData {
+
+    private AccessProxyClientData() {
+    }
+
     private static final AccessProxyClientData _instance = new AccessProxyClientData();
+
+    public static AccessProxyClientData getInstance() {
+        return _instance;
+    }
 
     private final HashMap<DimPos, DimPos> target_map = new HashMap<>();
     private final HashMap<DimPos, IValue> variable_map = new HashMap<>();
     private final HashMap<DimPos, int[]> rotation_map = new HashMap<>();
     private final HashMap<DimPos, Boolean> disable_map = new HashMap<>();
 
-    public static AccessProxyClientData getInstance() {
-        return _instance;
-    }
-
 
     public void putAll(DimPos proxy, DimPos target, boolean disable, int[] rotation, IValue value) {
-        this.target_map.put(proxy, target);
-        this.disable_map.put(proxy, disable);
-        this.rotation_map.put(proxy, rotation);
-        this.variable_map.put(proxy, value);
+        target_map.put(proxy, target);
+        disable_map.put(proxy, disable);
+        rotation_map.put(proxy, rotation);
+        variable_map.put(proxy, value);
     }
 
     public void putTarget(DimPos proxy, DimPos target) {
-        this.target_map.put(proxy, target);
+        target_map.put(proxy, target);
     }
 
     public void putVariable(DimPos proxy, IValue value) {
-        this.variable_map.put(proxy, value);
+        variable_map.put(proxy, value);
     }
 
     public void putRotation(DimPos proxy, int[] value) {
-        this.rotation_map.put(proxy, value);
+        rotation_map.put(proxy, value);
     }
 
     public void putDisable(DimPos proxy, boolean disable) {
-        this.disable_map.put(proxy, disable);
+        disable_map.put(proxy, disable);
     }
 
 
     public void remove(DimPos proxy) {
-        this.target_map.remove(proxy);
-        this.variable_map.remove(proxy);
-        this.rotation_map.remove(proxy);
-        this.disable_map.remove(proxy);
+        target_map.remove(proxy);
+        variable_map.remove(proxy);
+        rotation_map.remove(proxy);
+        disable_map.remove(proxy);
     }
 
     public HashMap<DimPos, DimPos> getTargetMap() {
-        return this.target_map;
-    }
-
-    public DimPos getTarget(DimPos dimPos) {
-        return this.target_map.get(dimPos);
+        return target_map;
     }
 
     public DimPos getTarget(BlockPos pos, int dim) {
-        return this.target_map.get(DimPos.of(dim, pos));
+        return target_map.get(DimPos.of(dim, pos));
     }
 
     public IValue getVariable(DimPos dimPos) {
-        return this.variable_map.get(dimPos);
-    }
-
-    public IValue getVariable(BlockPos pos, int dim) {
-        return this.variable_map.get(DimPos.of(dim, pos));
+        return variable_map.get(dimPos);
     }
 
     public int[] getRotation(DimPos dimPos) {
-        return this.rotation_map.get(dimPos);
-    }
-
-    public int[] getRotation(BlockPos pos, int dim) {
-        return this.rotation_map.get(DimPos.of(dim, pos));
+        return rotation_map.get(dimPos);
     }
 
     public boolean getDisable(DimPos dimPos) {
-        return this.disable_map.getOrDefault(dimPos, false);
-    }
-
-    public boolean getDisable(BlockPos pos, int dim) {
-        return this.disable_map.get(DimPos.of(dim, pos));
+        return disable_map.getOrDefault(dimPos, false);
     }
 
     @SubscribeEvent
     public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.player.equals(Minecraft.getMinecraft().player) && event.player.world.isRemote) {
-            this.target_map.clear();
-            this.variable_map.clear();
-            this.rotation_map.clear();
-            this.disable_map.clear();
+        if (event.player.world.isRemote && event.player.equals(Minecraft.getMinecraft().player)) {
+            target_map.clear();
+            variable_map.clear();
+            rotation_map.clear();
+            disable_map.clear();
         }
     }
 }

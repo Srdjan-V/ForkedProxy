@@ -64,10 +64,15 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     private boolean shouldSendUpdateEvent = false;
 
     public DimPos target;
+    private boolean updateTargetRequired;
+    public DimPos oldTarget;
+    private boolean updateOldTargetRequired;
 
     public Block targetBlock;
 
-    public int pos_mode = 0;
+    public int posMode = 0;
+
+    public boolean posModeUpdated;
     public int[] display_rotations = new int[]{0, 0, 0, 0, 0, 0};
     private int[] redstone_powers = new int[]{0, 0, 0, 0, 0, 0};
     private int[] strong_powers = new int[]{0, 0, 0, 0, 0, 0};
@@ -136,7 +141,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound tag) {
         tag = super.writeToNBT(tag);
-        tag.setInteger("pos_mode", this.pos_mode);
         NBTClassType.writeNbt(List.class, "errors_x", evaluator_x.getErrors(), tag);
         NBTClassType.writeNbt(List.class, "errors_y", evaluator_y.getErrors(), tag);
         NBTClassType.writeNbt(List.class, "errors_z", evaluator_z.getErrors(), tag);
@@ -145,6 +149,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         if (getDisplayValue() != null) {
             tag.setTag("displayValue", ValueHelpers.serialize(getDisplayValue()));
         }
+
+        tag.setBoolean("posMode", this.posModeUpdated);
+        tag.setInteger("posMode", this.posMode);
         tag.setIntArray("rs_power", this.redstone_powers);
         tag.setIntArray("strong_power", this.strong_powers);
         tag.setBoolean("disable_render", this.disable_render);
@@ -155,7 +162,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
-        this.pos_mode = tag.getInteger("pos_mode");
         this.evaluator_x.setErrors(NBTClassType.readNbt(List.class, "errors_x", tag));
         this.evaluator_y.setErrors(NBTClassType.readNbt(List.class, "errors_y", tag));
         this.evaluator_z.setErrors(NBTClassType.readNbt(List.class, "errors_z", tag));
@@ -166,6 +172,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         } else {
             setDisplayValue(null);
         }
+
+        this.posMode = tag.getInteger("posMode");
+        this.posModeUpdated = tag.getBoolean("posMode");
         this.redstone_powers = tag.getIntArray("rs_power");
         this.strong_powers = tag.getIntArray("strong_power");
         this.disable_render = tag.getBoolean("disable_render");
@@ -186,6 +195,13 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         if (!MinecraftHelpers.isClientSide()) {
             this.shouldSendUpdateEvent = true;
             WorldProxyManager.registerProxy(this);
+        }
+    }
+
+    @Override
+    public void onChunkUnload() {
+        if (!world.isRemote) {
+            WorldProxyManager.unRegisterProxy(this);
         }
     }
 
@@ -222,18 +238,21 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             variableZ = 0;
         }
 
+        if (posModeUpdated) {
+            isDirty = true;
+            posModeUpdated = false;
+        }
+
         return isDirty;
     }
 
-    private void updateProxyData() {
-        if (!getWorld().isRemote) {
-            boolean isDisplayDirty = isDisplayDirty();
-            boolean updateProxyTarget = updateProxyTarget();
-
-            if (isDisplayDirty || updateProxyTarget) {
-                markDirty();
-            }
+    private boolean isTargetOutOfRange(BlockPos target) {
+        if (BlockAccessProxyConfig.range < 0) {
+            return false;
         }
+        return Math.abs(target.getX() - this.pos.getX()) > BlockAccessProxyConfig.range ||
+                Math.abs(target.getY() - this.pos.getY()) > BlockAccessProxyConfig.range ||
+                Math.abs(target.getZ() - this.pos.getZ()) > BlockAccessProxyConfig.range;
     }
 
     private boolean isDisplayDirty() {
@@ -271,8 +290,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         Block oldBlockTarget = this.targetBlock;
 
         if (haveVariablesUpdated()) {
-            DimPos oldTarget = this.target == null ? null : DimPos.of(this.target.getDimensionId(), this.target.getBlockPos());
-            if (this.pos_mode == 1) {
+            oldTarget = this.target == null ? null : DimPos.of(this.target.getDimensionId(), this.target.getBlockPos());
+            if (this.posMode == 1) {
                 this.target = DimPos.of(this.world, new BlockPos(variableX, variableY, variableZ));
             } else {
                 this.target = DimPos.of(this.world, new BlockPos(variableX + this.pos.getX(), variableY + this.pos.getY(), variableZ + this.pos.getZ()));
@@ -280,9 +299,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
             targetChanged = !this.target.equals(oldTarget);
             if (targetChanged) {
-                isDirty = true;
                 ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(this.world, this.pos), this.target));
-                updateTargetBlock(oldTarget);
+                updateTargetRequired = true;
+                updateOldTargetRequired = true;
             }
         }
 
@@ -290,34 +309,51 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             this.target = DimPos.of(this.world, this.pos);
             this.targetBlock = BlockAccessProxy.getInstance();
             isDirty = true;
-        } else if (targetChanged || tickCounter == BlockAccessProxyConfig.blockUpdateTicks) {
+        } else if (targetChanged || tickCounter == 0) {
             this.targetBlock = world.getBlockState(target.getBlockPos()).getBlock();
             blockTargetChanged = !this.targetBlock.equals(oldBlockTarget);
             if (blockTargetChanged) {
                 if (!BlockAccessProxy.getInstance().equals(this.targetBlock)) {
-                    updateTargetBlock(target);
+                    updateTargetRequired = true;
                 }
             }
-            tickCounter = 0;
-        } else {
-            tickCounter++;
         }
 
         if (targetChanged || blockTargetChanged) {
-            notifyTargetChange();
+            updateProxyAfterTargetChange();
+            refreshFacePartNetwork();
             isDirty = true;
         }
 
         return isDirty;
     }
 
-    private boolean isTargetOutOfRange(BlockPos target) {
-        if (BlockAccessProxyConfig.range < 0) {
-            return false;
+    private void updateProxyData() {
+        if (!getWorld().isRemote) {
+            boolean isDisplayDirty = isDisplayDirty();
+            boolean updateProxyTarget = updateProxyTarget();
+
+            if (isDisplayDirty || updateProxyTarget) {
+                markDirty();
+            }
         }
-        return Math.abs(target.getX() - this.pos.getX()) > BlockAccessProxyConfig.range ||
-                Math.abs(target.getY() - this.pos.getY()) > BlockAccessProxyConfig.range ||
-                Math.abs(target.getZ() - this.pos.getZ()) > BlockAccessProxyConfig.range;
+    }
+
+    private void updateTargets() {
+        if (tickCounter == BlockAccessProxyConfig.blockUpdateTicks) {
+            if (updateOldTargetRequired) {
+                updateTargetBlock(oldTarget);
+                updateOldTargetRequired = false;
+            }
+
+            if (updateTargetRequired) {
+                updateTargetBlock(target);
+                updateTargetRequired = false;
+            }
+            tickCounter = 0;
+        } else {
+            tickCounter++;
+        }
     }
 
     @Override
@@ -328,13 +364,13 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             this.refreshVariables(true);
         }
         updateProxyData();
+        updateTargets();
     }
 
-    public void notifyTargetChange() {
+    public void updateProxyAfterTargetChange() {
         for (EnumFacing offset : EnumFacing.VALUES) {
             this.world.neighborChanged(this.pos.offset(offset), getBlockType(), this.pos);
         }
-        refreshFacePartNetwork();
     }
 
     public void updateTargetBlock(DimPos target) {
@@ -356,7 +392,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //IntegratedTunnels
-
+// TODO: 13/10/2022 Possibly find a better way of doing this 
     public static void refreshFacePartNetwork(World world, BlockPos pos) { //refresh the network of parts on the 6 face of access proxy block
         if (Constants.isIntegratedTunnelsLoaded()) {
             for (EnumFacing offset : EnumFacing.VALUES) {
@@ -372,7 +408,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     public void refreshFacePartNetwork() { //refresh the network of parts on the 6 face of access proxy block
-        refreshFacePartNetwork(this.world, this.pos);
+        refreshFacePartNetwork(world, pos);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -396,12 +432,12 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //BlockAccessProxy
-    public void unRegisterEventHandle() {
+    public void unRegisterProxyFromWorld() {
         WorldProxyManager.unRegisterProxy(this);
     }
 
     public void updateTargetBlock() {
-        updateTargetBlock(this.target);
+        updateTargetBlock(target);
     }
 
     public static void updateAfterBlockDestroy(World world, BlockPos pos) {

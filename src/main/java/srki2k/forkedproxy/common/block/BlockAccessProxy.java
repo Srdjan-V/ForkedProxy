@@ -52,7 +52,9 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
     @Override
     public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
         super.onBlockAdded(world, pos, state);
-        if (!world.isRemote) {
+
+        //why was this even needed?
+  /*      if (!world.isRemote) {
             TileAccessProxy te = (TileAccessProxy) world.getTileEntity(pos);
             if (te == null) {
                 return;
@@ -63,7 +65,7 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
                     te.setSideRedstonePower(facing, cap);
                 }
             }
-        }
+        }*/
     }
 
     @Override
@@ -74,7 +76,7 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
                 return;
             }
             te.sendRemoveRenderPacket();
-            te.unRegisterEventHandle();
+            te.unRegisterProxyFromWorld();
             te.updateTargetBlock();
         }
         super.onPreBlockDestroyed(world, pos);
@@ -94,15 +96,15 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
                     ((TileAccessProxy) world.getTileEntity(pos)).changeDisableRender();
                     return true;
                 }
-            } else {
-                if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
-                    ((TileAccessProxy) world.getTileEntity(pos)).rotateDisplayValue(side);
-                    return true;
-                }
+            } else if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
+                ((TileAccessProxy) world.getTileEntity(pos)).rotateDisplayValue(side);
+                return true;
             }
+
             return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
         }
 
+        //if (world.isRemote)
         if (!player.isSneaking()) {
             if (WrenchHelpers.isWrench(player, player.getHeldItem(hand), world, pos, side)) {
                 return true;
@@ -118,10 +120,10 @@ public class BlockAccessProxy extends BlockContainerGuiCabled {
     @Override
     public void neighborChanged(IBlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos fromPos) {
         super.neighborChanged(state, world, pos, neighborBlock, fromPos);
-        if (neighborBlock instanceof BlockAccessProxy) {
-            return;
-        }
         if (!world.isRemote) {
+            if (neighborBlock instanceof BlockAccessProxy) {
+                return;
+            }
             Vec3i facing_vec = fromPos.subtract(new Vec3i(pos.getX(), pos.getY(), pos.getZ()));
             EnumFacing facing = EnumFacing.getFacingFromVector(facing_vec.getX(), facing_vec.getY(), facing_vec.getZ());
             TileAccessProxy te = (TileAccessProxy) world.getTileEntity(pos);

@@ -46,7 +46,7 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
 
     @Override
     protected void initializeValues() {
-        ValueNotifierHelpers.setValue(this, lastPosModeValueId, getTile().pos_mode);
+        ValueNotifierHelpers.setValue(this, lastPosModeValueId, getTile().posMode);
     }
 
     public int getLastPosModeValue() {
@@ -58,7 +58,8 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
         super.onUpdate(valueId, value);
         if (!getTile().getWorld().isRemote) {
             if (valueId == lastPosModeValueId) {
-                getTile().pos_mode = getLastPosModeValue();
+                getTile().posMode = getLastPosModeValue();
+                getTile().posModeUpdated = true;
             }
         }
     }

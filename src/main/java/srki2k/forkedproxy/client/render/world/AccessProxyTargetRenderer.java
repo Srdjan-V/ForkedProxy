@@ -128,7 +128,6 @@ public class AccessProxyTargetRenderer {
                 break;
             case WEST:
                 GlStateManager.translate(-0.01, 1, 0);
-                break;
         }
     }
 
@@ -189,7 +188,6 @@ public class AccessProxyTargetRenderer {
                 GlStateManager.translate(0, -6.25, -6.25);
                 GlStateManager.rotate(rotation[5] * 90, 1, 0, 0);
                 GlStateManager.translate(0, 6.25, 6.25);
-                break;
         }
     }
 }
