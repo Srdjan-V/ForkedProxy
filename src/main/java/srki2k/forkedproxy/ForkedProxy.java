@@ -6,10 +6,7 @@ import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,9 +94,6 @@ public class ForkedProxy extends ModBase {
     public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
         if (event.getModID().equals(MODID)) {
             ConfigManager.sync(MODID, Config.Type.INSTANCE);
-            LOGGER.info("Changed config:");
-            LOGGER.info("Range: " + BlockAccessProxyConfig.range);
-            LOGGER.info("blockUpdateTicks: " + BlockAccessProxyConfig.blockUpdateTicks);
         }
     }
 }

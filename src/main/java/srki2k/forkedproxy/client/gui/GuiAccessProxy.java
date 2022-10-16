@@ -80,13 +80,20 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + this.guiLeft + 27 + 36 * 2 + 9, offsetY + this.guiTop + 42, 4210752);
         drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + this.guiLeft + 27 + 36 * 3 + 9, offsetY + this.guiTop + 42, 4210752);
 
-        DimPos target = AccessProxyClientData.getInstance().getTarget(getContainer().getTile().getPos(), getContainer().getTile().getWorld().provider.getDimension());
-        String pos_str = I18n.format(
-                "integrated_proxy.gui.access_proxy.display_pos",
-                target.getBlockPos().getX(),
-                target.getBlockPos().getY(),
-                target.getBlockPos().getZ()
-        );
+        DimPos target = AccessProxyClientData.getInstance().getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos())).getTarget();
+        String pos_str;
+
+        if (target != null) {
+            pos_str = I18n.format(
+                    "integrated_proxy.gui.access_proxy.display_pos",
+                    target.getBlockPos().getX(),
+                    target.getBlockPos().getY(),
+                    target.getBlockPos().getZ()
+            );
+
+        } else {
+            pos_str = "null";
+        }
         RenderHelpers.drawScaledCenteredString(this.fontRenderer, pos_str, this.getGuiLeftTotal() + 94, this.getGuiTopTotal() + 11, 76, ValueTypes.INTEGER.getDisplayColor());
     }
 

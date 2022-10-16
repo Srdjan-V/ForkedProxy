@@ -19,12 +19,6 @@ public class BlockAccessProxyConfig extends BlockContainerConfig {
             maximalValue = Integer.MAX_VALUE - 1)
     public static int range = -1;
 
-    @ConfigurableProperty(
-            category = ConfigurableTypeCategory.GENERAL,
-            comment = "Delay in ticks for block update checks, default 20",
-            isCommandable = true)
-    public static int blockUpdateTicks = 20;
-
     public BlockAccessProxyConfig() {
         super(
                 ForkedProxy.INSTANCE,

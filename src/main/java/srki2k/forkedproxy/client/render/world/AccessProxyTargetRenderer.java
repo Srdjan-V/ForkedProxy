@@ -1,8 +1,10 @@
 package srki2k.forkedproxy.client.render.world;
 
-import srki2k.forkedproxy.client.data.AccessProxyClientData;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,8 +17,8 @@ import org.cyclops.integrateddynamics.api.client.render.valuetype.IValueTypeWorl
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.client.render.valuetype.ValueTypeWorldRenderers;
 import org.lwjgl.opengl.GL11;
-
-import java.util.Map;
+import srki2k.forkedproxy.client.data.AccessProxyClientData;
+import srki2k.forkedproxy.client.data.ProxyPosData;
 
 public class AccessProxyTargetRenderer {
     @SubscribeEvent
@@ -30,11 +32,10 @@ public class AccessProxyTargetRenderer {
         double offsetY = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
         double offsetZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
 
-        for (Map.Entry<DimPos, DimPos> entry : AccessProxyClientData.getInstance().getTargetMap().entrySet()) {
-            DimPos proxy = entry.getKey();
-            DimPos target = entry.getValue();
+        for (ProxyPosData proxyPosData : AccessProxyClientData.getInstance().getProxy()) {
+            DimPos target = proxyPosData.getTarget();
 
-            if (AccessProxyClientData.getInstance().getDisable(proxy)) {
+            if (proxyPosData.isDisable() || target == null) {
                 continue;
             }
 
@@ -59,13 +60,13 @@ public class AccessProxyTargetRenderer {
         GlStateManager.enableTexture2D();
 
         GlStateManager.enableRescaleNormal();
-        for (Map.Entry<DimPos, DimPos> entry : AccessProxyClientData.getInstance().getTargetMap().entrySet()) {
-            DimPos proxy = entry.getKey();
-            DimPos target = entry.getValue();
-            IValue value = AccessProxyClientData.getInstance().getVariable(proxy);
-            int[] rotation = AccessProxyClientData.getInstance().getRotation(proxy);
-            if (rotation == null) {
-                rotation = new int[]{0, 0, 0, 0, 0, 0};
+        for (ProxyPosData proxyPosData : AccessProxyClientData.getInstance().getProxy()) {
+            DimPos target = proxyPosData.getTarget();
+            IValue value = proxyPosData.getVariable();
+            int[] rotation = proxyPosData.getRotation();
+
+            if (proxyPosData.isDisable() || target == null) {
+                continue;
             }
 
             GlStateManager.pushMatrix();

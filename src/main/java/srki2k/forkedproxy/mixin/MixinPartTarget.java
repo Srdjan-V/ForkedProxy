@@ -15,14 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinPartTarget {
     @Inject(at = @At("HEAD"), method = "getTarget()Lorg/cyclops/integrateddynamics/api/part/PartPos;", cancellable = true, remap = false)
     private void getTarget(CallbackInfoReturnable<PartPos> callback) {
-        PartPos original_pos = target;
-        if (original_pos.getPos().getWorld() == null) {
+        if (target.getPos().getWorld() == null) {
             ForkedProxy.LOGGER.warn("Mixin getTarget() can't get target World");
             return;
         }
-        TileEntity te = original_pos.getPos().getWorld().getTileEntity(original_pos.getPos().getBlockPos());
+        TileEntity te = target.getPos().getWorld().getTileEntity(target.getPos().getBlockPos());
         if (te instanceof TileAccessProxy && ((TileAccessProxy) te).target != null) {
-            callback.setReturnValue(PartPos.of(((TileAccessProxy) te).target, original_pos.getSide()));
+            callback.setReturnValue(PartPos.of(((TileAccessProxy) te).target, target.getSide()));
         }
     }
 
