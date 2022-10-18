@@ -43,6 +43,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class TileAccessProxy extends TileCableConnectableInventory implements IDirtyMarkListener, INetworkEventListener<AccessProxyNetworkElement> {
 
@@ -70,6 +71,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     public boolean disable_render = false;
 
+    public int updateTickDelay = 20;
+    private int ticks;
+
     private boolean registeredProxyWorld;
 
     public TileAccessProxy() {
@@ -88,6 +92,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         evaluator_z = new InventoryVariableEvaluator<>(this, SLOT_Z, ValueTypes.INTEGER);
         evaluator_display = new InventoryVariableEvaluator<>(this, SLOT_DISPLAY, ValueTypes.CATEGORY_ANY);
 
+        ticks = ThreadLocalRandom.current().nextInt(20);
     }
 
     @Override
@@ -147,6 +152,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         tag.setIntArray("rs_power", redstone_powers);
         tag.setIntArray("strong_power", strong_powers);
         tag.setBoolean("disable_render", disable_render);
+        tag.setInteger("updateTickDelay", updateTickDelay);
 
         return tag;
     }
@@ -170,6 +176,10 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         redstone_powers = tag.getIntArray("rs_power");
         strong_powers = tag.getIntArray("strong_power");
         disable_render = tag.getBoolean("disable_render");
+        updateTickDelay = tag.getInteger("updateTickDelay");
+        if (updateTickDelay < 1) {
+            updateTickDelay = 1;
+        }
 
         shouldSendUpdateEvent = true;
     }
@@ -342,7 +352,10 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         if (!world.isRemote) {
             //first tick
             registerProxyInWorld();
-            updateProxyData();
+
+            if (ticks++ % updateTickDelay == 0) {
+                updateProxyData();
+            }
         }
     }
 

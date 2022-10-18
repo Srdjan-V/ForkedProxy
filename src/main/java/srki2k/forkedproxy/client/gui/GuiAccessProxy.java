@@ -1,19 +1,25 @@
 package srki2k.forkedproxy.client.gui;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import org.cyclops.cyclopscore.client.gui.component.input.GuiNumberField;
 import org.cyclops.cyclopscore.client.gui.container.GuiContainerConfigurable;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integrateddynamics.inventory.container.ContainerDelay;
 import srki2k.forkedproxy.client.data.AccessProxyClientData;
 import srki2k.forkedproxy.common.container.ContainerAccessProxy;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
+
+import java.io.IOException;
 
 public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProxy> {
     public DisplayErrorsComponent errorX = new DisplayErrorsComponent();
@@ -21,11 +27,68 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
     public DisplayErrorsComponent errorZ = new DisplayErrorsComponent();
     public DisplayErrorsComponent errorDisplay = new DisplayErrorsComponent();
 
+    private GuiNumberField numberFieldUpdateInterval = null;
+
     private static final int ERRORS_X = 20;
-    private static final int ERRORS_Y = 71;
+    private static final int ERRORS_Y = 99;
 
     public GuiAccessProxy(InventoryPlayer inventory, TileAccessProxy tile) {
         super(new ContainerAccessProxy(inventory, tile));
+    }
+
+    @Override
+    public void initGui() {
+        super.initGui();
+        numberFieldUpdateInterval = new GuiNumberField(0, Minecraft.getMinecraft().fontRenderer, guiLeft + 92, guiTop + 24, 82, 14, true, true);
+        numberFieldUpdateInterval.setPositiveOnly(true);
+        numberFieldUpdateInterval.setMaxStringLength(64);
+        numberFieldUpdateInterval.setMaxStringLength(15);
+        numberFieldUpdateInterval.setVisible(true);
+        numberFieldUpdateInterval.setMinValue(1);
+        numberFieldUpdateInterval.setTextColor(16777215);
+        numberFieldUpdateInterval.setCanLoseFocus(true);
+    }
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        if (!this.checkHotbarKeys(keyCode)) {
+            if (!this.numberFieldUpdateInterval.textboxKeyTyped(typedChar, keyCode)) {
+                super.keyTyped(typedChar, keyCode);
+            } else {
+                onValueChanged();
+            }
+        }
+    }
+
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        numberFieldUpdateInterval.mouseClicked(mouseX, mouseY, mouseButton);
+        onValueChanged();
+        super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int state) {
+        super.mouseReleased(mouseX, mouseY, state);
+        if (RenderHelpers.isPointInRegion(offsetX + guiLeft + 44, offsetY + guiTop + 48, 90, 16, mouseX - offsetX, mouseY - offsetY) && state == 0) {
+            ValueNotifierHelpers.setValue(getContainer(), getContainer().lastPosModeValueId, this.getContainer().getLastPosModeValue() == 0 ? 1 : 0);
+        }
+    }
+
+    protected void onValueChanged() {
+        int updateInterval = 1;
+        try {
+            updateInterval = numberFieldUpdateInterval.getInt();
+        } catch (NumberFormatException ignored) {
+        }
+        ValueNotifierHelpers.setValue(getContainer(), getContainer().lastUpdateTickDelayID, updateInterval);
+    }
+
+    @Override
+    public void onUpdate(int valueId, NBTTagCompound value) {
+        if (valueId == getContainer().lastUpdateTickDelayID) {
+            numberFieldUpdateInterval.setText(Integer.toString(getContainer().getLastUpdateValue()));
+        }
     }
 
     @Override
@@ -40,16 +103,13 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
 
     @Override
     protected int getBaseYSize() {
-        return 170;
+        return 198;
     }
 
-    @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state) {
-        super.mouseReleased(mouseX, mouseY, state);
-        if (RenderHelpers.isPointInRegion(offsetX + this.guiLeft + 44, offsetY + this.guiTop + 20, 90, 16, mouseX - this.offsetX, mouseY - this.offsetY) && state == 0) {
-            ValueNotifierHelpers.setValue(getContainer(), getContainer().lastPosModeValueId, this.getContainer().getLastPosModeValue() == 0 ? 1 : 0);
-        }
+    protected int getBaseXSize() {
+        return 177;
     }
+
 
     @Override
     public void drawCenteredString(FontRenderer fontRendererIn, String text, int x, int y, int color) {
@@ -57,28 +117,31 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(float f, int x, int y) {
+    protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        this.mc.getTextureManager().bindTexture(this.texture);
-        this.drawTexturedModalRect(this.offsetX + this.guiLeft, this.offsetY + this.guiTop, 0, 0, 177, 170);
+
+        mc.getTextureManager().bindTexture(texture);
+        drawTexturedModalRect(offsetX + guiLeft, offsetY + guiTop, 0, 0, getBaseXSize(), getBaseYSize());
 
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         TileAccessProxy tile = getContainer().getTile();
-        this.errorX.drawBackground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, ERRORS_X + 36 * 0 + 9, ERRORS_Y, this, this.guiLeft, this.guiTop, getContainer().variableOk(getContainer().lastXOkId));
-        this.errorY.drawBackground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, ERRORS_X + 36 * 1 + 9, ERRORS_Y, this, this.guiLeft, this.guiTop, getContainer().variableOk(getContainer().lastYOkId));
-        this.errorZ.drawBackground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, this.guiLeft, this.guiTop, getContainer().variableOk(getContainer().lastZOkId));
-        this.errorDisplay.drawBackground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, this.guiLeft, this.guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
+        errorX.drawBackground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, ERRORS_X + 36 * 0 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastXOkId));
+        errorY.drawBackground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, ERRORS_X + 36 * 1 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastYOkId));
+        errorZ.drawBackground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastZOkId));
+        errorDisplay.drawBackground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
+
+        numberFieldUpdateInterval.drawTextBox(Minecraft.getMinecraft(), mouseX - guiLeft, mouseY - guiTop);
 
         if (this.getContainer().getLastPosModeValue() == 0) {
-            drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.relative_mode"), offsetX + this.guiLeft + 88, offsetY + this.guiTop + 24, 4210752);
+            drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.relative_mode"), offsetX + this.guiLeft + 88, offsetY + this.guiTop + 52, 4210752);
         } else {
-            drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.absolute_mode"), offsetX + this.guiLeft + 88, offsetY + this.guiTop + 24, 4210752);
+            drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.absolute_mode"), offsetX + this.guiLeft + 88, offsetY + this.guiTop + 52, 4210752);
         }
-        drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.x"), offsetX + this.guiLeft + 27 + 36 * 0 + 9, offsetY + this.guiTop + 42, 4210752);
-        drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.y"), offsetX + this.guiLeft + 27 + 36 * 1 + 9, offsetY + this.guiTop + 42, 4210752);
-        drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + this.guiLeft + 27 + 36 * 2 + 9, offsetY + this.guiTop + 42, 4210752);
-        drawCenteredString(this.fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + this.guiLeft + 27 + 36 * 3 + 9, offsetY + this.guiTop + 42, 4210752);
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.x"), offsetX + guiLeft + 27 + 36 * 0 + 9, offsetY + guiTop + 70, 4210752);
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.y"), offsetX + guiLeft + 27 + 36 * 1 + 9, offsetY + guiTop + 70, 4210752);
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + guiLeft + 27 + 36 * 2 + 9, offsetY + guiTop + 70, 4210752);
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + guiLeft + 27 + 36 * 3 + 9, offsetY + guiTop + 70, 4210752);
 
         DimPos target = AccessProxyClientData.getInstance().getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos())).getTarget();
         String pos_str;
@@ -94,7 +157,7 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         } else {
             pos_str = "null";
         }
-        RenderHelpers.drawScaledCenteredString(this.fontRenderer, pos_str, this.getGuiLeftTotal() + 94, this.getGuiTopTotal() + 11, 76, ValueTypes.INTEGER.getDisplayColor());
+        RenderHelpers.drawScaledCenteredString(fontRenderer, pos_str, getGuiLeftTotal() + 94, getGuiTopTotal() + 11, 76, ValueTypes.INTEGER.getDisplayColor());
     }
 
     @Override
@@ -103,9 +166,9 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         GlStateManager.translate(1, 1, 1);
         TileAccessProxy tile = getContainer().getTile();
-        this.errorX.drawForeground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, mouseX, mouseY, this, this.guiLeft, this.guiTop);
-        this.errorY.drawForeground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, mouseX, mouseY, this, this.guiLeft, this.guiTop);
-        this.errorZ.drawForeground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, mouseX, mouseY, this, this.guiLeft, this.guiTop);
-        this.errorDisplay.drawForeground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, mouseX, mouseY, this, this.guiLeft, this.guiTop);
+        errorX.drawForeground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorY.drawForeground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorZ.drawForeground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorDisplay.drawForeground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
     }
 }

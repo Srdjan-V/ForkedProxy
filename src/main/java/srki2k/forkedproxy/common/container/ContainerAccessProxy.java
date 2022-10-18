@@ -12,6 +12,7 @@ import org.cyclops.integrateddynamics.item.ItemVariable;
 
 public class ContainerAccessProxy extends TileInventoryContainerConfigurable<TileAccessProxy> {
     public final int lastPosModeValueId;
+    public final int lastUpdateTickDelayID;
     public final int lastXOkId;
     public final int lastYOkId;
     public final int lastZOkId;
@@ -19,12 +20,14 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
 
     public ContainerAccessProxy(InventoryPlayer inventory, TileAccessProxy tile) {
         super(inventory, tile);
-        for (int i = 0;i < 4;i++) {
-            addSlotToContainer(createNewSlot(tile, i, offsetX + 27 + i * 36, offsetY + 52));
+
+        for (int i = 0; i < 4; i++) {
+            addSlotToContainer(createNewSlot(tile, i, offsetX + 27 + i * 36, offsetY + 80));
         }
-        addPlayerInventory(inventory, offsetX + 9, offsetY + 88);
+        addPlayerInventory(inventory, offsetX + 9, offsetY + 116);
 
         lastPosModeValueId = getNextValueId();
+        lastUpdateTickDelayID = getNextValueId();
         lastXOkId = getNextValueId();
         lastYOkId = getNextValueId();
         lastZOkId = getNextValueId();
@@ -47,10 +50,15 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
     @Override
     protected void initializeValues() {
         ValueNotifierHelpers.setValue(this, lastPosModeValueId, getTile().posMode);
+        ValueNotifierHelpers.setValue(this, lastUpdateTickDelayID, getTile().updateTickDelay);
     }
 
     public int getLastPosModeValue() {
         return ValueNotifierHelpers.getValueInt(this, lastPosModeValueId);
+    }
+
+    public int getLastUpdateValue() {
+        return ValueNotifierHelpers.getValueInt(this, lastUpdateTickDelayID);
     }
 
     @Override
@@ -61,12 +69,15 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
                 getTile().posMode = getLastPosModeValue();
                 getTile().posModeUpdated = true;
             }
+            if (valueId == lastUpdateTickDelayID) {
+                getTile().updateTickDelay = getLastUpdateValue();
+            }
         }
     }
 
     @Override
     public Slot createNewSlot(IInventory inventory, int index, int row, int column) {
-        if(inventory instanceof InventoryPlayer) {
+        if (inventory instanceof InventoryPlayer) {
             return super.createNewSlot(inventory, index, row, column);
         }
         return new SlotSingleItem(inventory, index, row, column, ItemVariable.getInstance());
