@@ -9,7 +9,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
-import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -19,8 +18,11 @@ import srki2k.forkedproxy.common.packet.LoginProxyRenderPacket;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = ForkedProxy.MODID)
 public class WorldProxyManager {
@@ -28,29 +30,37 @@ public class WorldProxyManager {
     private WorldProxyManager() {
     }
 
-    private static final Set<TileAccessProxy> existingTiles = new HashSet<>();
+    private static final HashMap<Integer, List<TileAccessProxy>> dimProxyMap = new HashMap<>();
 
+    public static void registerProxy(int dimensionId, TileAccessProxy proxy) {
+        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
 
-    // TODO: 16/10/2022 Find a better way of doing this
-    private static final IWorldEventListener proxyWorldEventListener = new ProxyWorldEventListener();
+        if (tileAccessProxyList == null) {
+            tileAccessProxyList = new ArrayList<>();
+            dimProxyMap.put(dimensionId, tileAccessProxyList);
+            proxy.getWorld().addEventListener(ProxyWorldEventListener.getInstance());
+        }
 
-    static {
-        for (World world : DimensionManager.getWorlds()) {
-            world.addEventListener(proxyWorldEventListener);
+        tileAccessProxyList.add(proxy);
+    }
+
+    public static void unRegisterProxy(int dimensionId, TileAccessProxy proxy) {
+        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
+        tileAccessProxyList.remove(proxy);
+
+        if (tileAccessProxyList.isEmpty()) {
+            dimProxyMap.remove(dimensionId);
+            proxy.getWorld().removeEventListener(ProxyWorldEventListener.getInstance());
         }
     }
 
-    public static void registerProxy(TileAccessProxy proxy) {
-        existingTiles.add(proxy);
-    }
-
-    public static void unRegisterProxy(TileAccessProxy proxy) {
-        existingTiles.remove(proxy);
-    }
-
-    public static TileAccessProxy getRedstoneProxiesFromTarget(DimPos target) {
-        for (TileAccessProxy p : existingTiles) {
-            if (target.equals(p.target)) {
+    public static TileAccessProxy getRedstoneProxiesFromTarget(int dimensionId, BlockPos target) {
+        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
+        if (tileAccessProxyList == null) {
+            return null;
+        }
+        for (TileAccessProxy p : tileAccessProxyList) {
+            if (target.equals(p.target.getBlockPos())) {
                 return p;
             }
         }
@@ -61,7 +71,7 @@ public class WorldProxyManager {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.player.world.isRemote) {
-            for (TileAccessProxy proxy : existingTiles) {
+            for (TileAccessProxy proxy : dimProxyMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList())) {
                 //Checking for null why don't know, but this fixes NPEs
                 if (proxy.target == null) {
                     DimPos proxyPosTarget = DimPos.of(proxy.getWorld(), proxy.getPos());
@@ -80,14 +90,28 @@ public class WorldProxyManager {
     }
 
     public static void cleanExistingTiles() {
-        existingTiles.clear();
+        dimProxyMap.clear();
     }
 
     private static class ProxyWorldEventListener implements IWorldEventListener {
+        private static ProxyWorldEventListener proxyWorldEventListener;
+
+        public static ProxyWorldEventListener getInstance() {
+            if (proxyWorldEventListener == null) {
+                proxyWorldEventListener = new ProxyWorldEventListener();
+            }
+
+            return proxyWorldEventListener;
+        }
+
         @Override
         public void notifyBlockUpdate(World worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags) {
-            for (TileAccessProxy proxy : existingTiles) {
-                if (proxy.target != null && pos.equals(proxy.target.getBlockPos()) && worldIn.equals(proxy.target.getWorld())) {
+            List<TileAccessProxy> proxies = dimProxyMap.get(worldIn.provider.getDimension());
+            if (proxies == null) {
+                return;
+            }
+            for (TileAccessProxy proxy : proxies) {
+                if (proxy.target != null && !pos.equals(proxy.getPos()) && pos.equals(proxy.target.getBlockPos()) && worldIn.equals(proxy.target.getWorld())) {
                     proxy.updateProxyAfterTargetChange();
                 }
             }

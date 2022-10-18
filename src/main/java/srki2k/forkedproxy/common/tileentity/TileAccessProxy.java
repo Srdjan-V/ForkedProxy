@@ -70,6 +70,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     public boolean disable_render = false;
 
+    private boolean registeredProxyWorld;
+
     public TileAccessProxy() {
         super(4, "variables", 1);
         inventory.addDirtyMarkListener(this);
@@ -184,14 +186,29 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         super.onLoad();
         if (!MinecraftHelpers.isClientSide()) {
             shouldSendUpdateEvent = true;
-            WorldProxyManager.registerProxy(this);
         }
     }
 
     @Override
     public void onChunkUnload() {
-        if (!world.isRemote) {
-            WorldProxyManager.unRegisterProxy(this);
+        super.onChunkUnload();
+        //this will only work for servers, why ID is doing some dumb shit
+        unRegisterProxyFromWorld();
+    }
+
+    public void unRegisterProxyFromWorld() {
+        if (registeredProxyWorld) {
+            if (!world.isRemote) {
+                WorldProxyManager.unRegisterProxy(world.provider.getDimension(), this);
+                registeredProxyWorld = false;
+            }
+        }
+    }
+
+    public void registerProxyInWorld() {
+        if (!registeredProxyWorld) {
+            WorldProxyManager.registerProxy(world.provider.getDimension(), this);
+            registeredProxyWorld = true;
         }
     }
 
@@ -323,6 +340,8 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             refreshVariables(true);
         }
         if (!world.isRemote) {
+            //first tick
+            registerProxyInWorld();
             updateProxyData();
         }
     }
@@ -392,9 +411,6 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //BlockAccessProxy
-    public void unRegisterProxyFromWorld() {
-        WorldProxyManager.unRegisterProxy(this);
-    }
 
     public void updateTargetBlock() {
         updateTargetBlock(target);
