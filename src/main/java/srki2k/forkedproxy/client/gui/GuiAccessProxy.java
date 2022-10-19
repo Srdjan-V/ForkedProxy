@@ -14,8 +14,8 @@ import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
-import org.cyclops.integrateddynamics.inventory.container.ContainerDelay;
 import srki2k.forkedproxy.client.data.AccessProxyClientData;
+import srki2k.forkedproxy.client.data.ProxyPosData;
 import srki2k.forkedproxy.common.container.ContainerAccessProxy;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
@@ -131,6 +131,7 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         errorZ.drawBackground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastZOkId));
         errorDisplay.drawBackground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
 
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.ticks"), offsetX + guiLeft + 27 + 9+11, offsetY + guiTop + 24+2, 4210752);
         numberFieldUpdateInterval.drawTextBox(Minecraft.getMinecraft(), mouseX - guiLeft, mouseY - guiTop);
 
         if (this.getContainer().getLastPosModeValue() == 0) {
@@ -143,17 +144,18 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + guiLeft + 27 + 36 * 2 + 9, offsetY + guiTop + 70, 4210752);
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + guiLeft + 27 + 36 * 3 + 9, offsetY + guiTop + 70, 4210752);
 
-        DimPos target = AccessProxyClientData.getInstance().getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos())).getTarget();
+        ProxyPosData proxyPosData = AccessProxyClientData.getInstance().getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos()));
+
         String pos_str;
 
-        if (target != null) {
+        if (proxyPosData != null && proxyPosData.getTarget() != null) {
+            DimPos target = proxyPosData.getTarget();
             pos_str = I18n.format(
                     "integrated_proxy.gui.access_proxy.display_pos",
                     target.getBlockPos().getX(),
                     target.getBlockPos().getY(),
                     target.getBlockPos().getZ()
             );
-
         } else {
             pos_str = "null";
         }

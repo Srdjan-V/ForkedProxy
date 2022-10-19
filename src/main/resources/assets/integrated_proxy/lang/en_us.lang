@@ -2,6 +2,7 @@ itemGroup.integrated_proxy=Integrated Proxy
 
 tile.blocks.integrated_proxy.access_proxy.name=Access Proxy
 
+integrated_proxy.gui.access_proxy.ticks=Ticks/Operations
 integrated_proxy.gui.access_proxy.relative_mode=Relative Mode
 integrated_proxy.gui.access_proxy.absolute_mode=Absolute Mode
 integrated_proxy.gui.access_proxy.x=X

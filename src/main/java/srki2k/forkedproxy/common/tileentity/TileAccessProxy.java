@@ -120,6 +120,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     public void onEvent(INetworkEvent event, AccessProxyNetworkElement networkElement) {
         if (event instanceof VariableContentsUpdatedEvent) {
             refreshVariables(false);
+            sendUpdate();
         }
     }
 
@@ -232,6 +233,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 isDirty = true;
             }
         } catch (EvaluationException ignored) {
+            isDirty = true;
             variableX = 0;
         }
 
@@ -242,6 +244,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 isDirty = true;
             }
         } catch (EvaluationException ignored) {
+            isDirty = true;
             variableY = 0;
         }
 
@@ -252,6 +255,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 isDirty = true;
             }
         } catch (EvaluationException ignored) {
+            isDirty = true;
             variableZ = 0;
         }
 
