@@ -47,31 +47,31 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TileAccessProxy extends TileCableConnectableInventory implements IDirtyMarkListener, INetworkEventListener<AccessProxyNetworkElement> {
 
-    public static final int SLOT_X = 0;
-    public static final int SLOT_Y = 1;
-    public static final int SLOT_Z = 2;
-    public static final int SLOT_DISPLAY = 3;
-    public final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator_x;
+    private static final int SLOT_X = 0;
+    private static final int SLOT_Y = 1;
+    private static final int SLOT_Z = 2;
+    private static final int SLOT_DISPLAY = 3;
+    private final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluatorX;
     private int variableX = Integer.MAX_VALUE;
-    public final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator_y;
+    private final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluatorY;
     private int variableY = Integer.MAX_VALUE;
-    public final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator_z;
+    private final InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluatorZ;
     private int variableZ = Integer.MAX_VALUE;
-    public final InventoryVariableEvaluator<IValue> evaluator_display;
-    private IValue display_value;
+    private final InventoryVariableEvaluator<IValue> evaluatorDisplay;
+    private IValue displayValue;
     private boolean shouldSendUpdateEvent = false;
 
-    public DimPos target;
-    public int posMode = 0;
+    private DimPos target;
+    private int posMode = 0;
 
-    public boolean posModeUpdated;
-    public int[] display_rotations = new int[]{0, 0, 0, 0, 0, 0};
-    private int[] redstone_powers = new int[]{0, 0, 0, 0, 0, 0};
-    private int[] strong_powers = new int[]{0, 0, 0, 0, 0, 0};
+    private boolean posModeUpdated;
+    private int[] displayRotations = new int[]{0, 0, 0, 0, 0, 0};
+    private int[] redstonePowers = new int[]{0, 0, 0, 0, 0, 0};
+    private int[] strongPowers = new int[]{0, 0, 0, 0, 0, 0};
 
-    public boolean disable_render = false;
+    private boolean disableRender = false;
 
-    public int updateTickDelay = 20;
+    private int updateTickDelay = 20;
     private int ticks;
 
     private boolean registeredProxyWorld;
@@ -87,12 +87,16 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             }
         });
         addCapabilityInternal(VariableContainerConfig.CAPABILITY, new VariableContainerDefault());
-        evaluator_x = new InventoryVariableEvaluator<>(this, SLOT_X, ValueTypes.INTEGER);
-        evaluator_y = new InventoryVariableEvaluator<>(this, SLOT_Y, ValueTypes.INTEGER);
-        evaluator_z = new InventoryVariableEvaluator<>(this, SLOT_Z, ValueTypes.INTEGER);
-        evaluator_display = new InventoryVariableEvaluator<>(this, SLOT_DISPLAY, ValueTypes.CATEGORY_ANY);
+        evaluatorX = new InventoryVariableEvaluator<>(this, SLOT_X, ValueTypes.INTEGER);
+        evaluatorY = new InventoryVariableEvaluator<>(this, SLOT_Y, ValueTypes.INTEGER);
+        evaluatorZ = new InventoryVariableEvaluator<>(this, SLOT_Z, ValueTypes.INTEGER);
+        evaluatorDisplay = new InventoryVariableEvaluator<>(this, SLOT_DISPLAY, ValueTypes.CATEGORY_ANY);
 
-        ticks = ThreadLocalRandom.current().nextInt(20);
+        if (BlockAccessProxyConfig.randomStartTick) {
+            ticks = ThreadLocalRandom.current().nextInt(20);
+        } else {
+            ticks = 0;
+        }
     }
 
     @Override
@@ -139,20 +143,20 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound tag) {
         tag = super.writeToNBT(tag);
-        NBTClassType.writeNbt(List.class, "errors_x", evaluator_x.getErrors(), tag);
-        NBTClassType.writeNbt(List.class, "errors_y", evaluator_y.getErrors(), tag);
-        NBTClassType.writeNbt(List.class, "errors_z", evaluator_z.getErrors(), tag);
-        NBTClassType.writeNbt(List.class, "errors_display", evaluator_display.getErrors(), tag);
-        tag.setIntArray("display_rotations", display_rotations);
-        if (getDisplayValue() != null) {
-            tag.setTag("displayValue", ValueHelpers.serialize(getDisplayValue()));
+        NBTClassType.writeNbt(List.class, "errors_x", evaluatorX.getErrors(), tag);
+        NBTClassType.writeNbt(List.class, "errors_y", evaluatorY.getErrors(), tag);
+        NBTClassType.writeNbt(List.class, "errors_z", evaluatorZ.getErrors(), tag);
+        NBTClassType.writeNbt(List.class, "errors_display", evaluatorDisplay.getErrors(), tag);
+        tag.setIntArray("display_rotations", displayRotations);
+        if (displayValue != null) {
+            tag.setTag("displayValue", ValueHelpers.serialize(displayValue));
         }
 
         tag.setBoolean("posMode", posModeUpdated);
         tag.setInteger("posMode", posMode);
-        tag.setIntArray("rs_power", redstone_powers);
-        tag.setIntArray("strong_power", strong_powers);
-        tag.setBoolean("disable_render", disable_render);
+        tag.setIntArray("rs_power", redstonePowers);
+        tag.setIntArray("strong_power", strongPowers);
+        tag.setBoolean("disable_render", disableRender);
         tag.setInteger("updateTickDelay", updateTickDelay);
 
         return tag;
@@ -161,22 +165,22 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
-        evaluator_x.setErrors(NBTClassType.readNbt(List.class, "errors_x", tag));
-        evaluator_y.setErrors(NBTClassType.readNbt(List.class, "errors_y", tag));
-        evaluator_z.setErrors(NBTClassType.readNbt(List.class, "errors_z", tag));
-        evaluator_display.setErrors(NBTClassType.readNbt(List.class, "errors_display", tag));
-        display_rotations = tag.getIntArray("display_rotations");
+        evaluatorX.setErrors(NBTClassType.readNbt(List.class, "errors_x", tag));
+        evaluatorY.setErrors(NBTClassType.readNbt(List.class, "errors_y", tag));
+        evaluatorZ.setErrors(NBTClassType.readNbt(List.class, "errors_z", tag));
+        evaluatorDisplay.setErrors(NBTClassType.readNbt(List.class, "errors_display", tag));
+        displayRotations = tag.getIntArray("display_rotations");
         if (tag.hasKey("displayValue", MinecraftHelpers.NBTTag_Types.NBTTagCompound.ordinal())) {
-            setDisplayValue(ValueHelpers.deserialize(tag.getCompoundTag("displayValue")));
+            displayValue = ValueHelpers.deserialize(tag.getCompoundTag("displayValue"));
         } else {
-            setDisplayValue(null);
+            displayValue = null;
         }
 
         posMode = tag.getInteger("posMode");
-        posModeUpdated = tag.getBoolean("posMode");
-        redstone_powers = tag.getIntArray("rs_power");
-        strong_powers = tag.getIntArray("strong_power");
-        disable_render = tag.getBoolean("disable_render");
+        posModeUpdated = tag.getBoolean("posModeUpdated");
+        redstonePowers = tag.getIntArray("rs_power");
+        strongPowers = tag.getIntArray("strong_power");
+        disableRender = tag.getBoolean("disable_render");
         updateTickDelay = tag.getInteger("updateTickDelay");
         if (updateTickDelay < 1) {
             updateTickDelay = 1;
@@ -224,47 +228,45 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private boolean haveVariablesUpdated() {
-        boolean isDirty = false;
+        boolean haveUpdated = false;
 
         try {
-            int localVariableX = isVariableAvailable(evaluator_x) ? getVariableIntValue(evaluator_x) : 0;
+            int localVariableX = isVariableAvailable(evaluatorX) ? getVariableIntValue(evaluatorX) : 0;
             if (localVariableX != variableX) {
                 variableX = localVariableX;
-                isDirty = true;
+                haveUpdated = true;
             }
         } catch (EvaluationException ignored) {
-            isDirty = true;
+            haveUpdated = true;
             variableX = 0;
         }
 
         try {
-            int localVariableY = isVariableAvailable(evaluator_y) ? getVariableIntValue(evaluator_y) : 0;
+            int localVariableY = isVariableAvailable(evaluatorY) ? getVariableIntValue(evaluatorY) : 0;
             if (localVariableY != variableY) {
                 variableY = localVariableY;
-                isDirty = true;
+                haveUpdated = true;
             }
         } catch (EvaluationException ignored) {
-            isDirty = true;
             variableY = 0;
         }
 
         try {
-            int localVariableZ = isVariableAvailable(evaluator_z) ? getVariableIntValue(evaluator_z) : 0;
+            int localVariableZ = isVariableAvailable(evaluatorZ) ? getVariableIntValue(evaluatorZ) : 0;
             if (localVariableZ != variableZ) {
                 variableZ = localVariableZ;
-                isDirty = true;
+                haveUpdated = true;
             }
         } catch (EvaluationException ignored) {
-            isDirty = true;
             variableZ = 0;
         }
 
         if (posModeUpdated) {
-            isDirty = true;
+            haveUpdated = true;
             posModeUpdated = false;
         }
 
-        return isDirty;
+        return haveUpdated;
     }
 
     private boolean isTargetOutOfRange(BlockPos target) {
@@ -276,84 +278,78 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 Math.abs(target.getZ() - pos.getZ()) > BlockAccessProxyConfig.range;
     }
 
-    private boolean isDisplayDirty() {
-        if (disable_render) {
-            return false;
+    private void updateDisplay() {
+        if (disableRender) {
+            return;
         }
 
-        IVariable<IValue> variable = evaluator_display.getVariable(getNetwork());
+        IVariable<IValue> variable = evaluatorDisplay.getVariable(getNetwork());
         try {
             if (variable == null) {
-                if (getDisplayValue() == null) {
-                    return false;
+                if (displayValue == null) {
+                    return;
                 }
             } else {
                 IValue value = variable.getValue();
-                if (value == getDisplayValue()) {
-                    return false;
+                if (value == displayValue) {
+                    return;
                 }
-                setDisplayValue(value);
+                displayValue = value;
             }
 
         } catch (EvaluationException ignored) {
-            setDisplayValue(null);
+            displayValue = null;
         }
 
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(world, pos), getDisplayValue()));
-        return true;
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(world, pos), displayValue));
+        markDirty();
     }
 
-    private boolean updateProxyTarget() {
-        boolean targetChanged = false;
-        boolean isDirty = false;
-
-        if (haveVariablesUpdated()) {
-            DimPos oldTarget = target == null ? null : DimPos.of(target.getDimensionId(), target.getBlockPos());
-            if (posMode == 1) {
-                target = DimPos.of(world, new BlockPos(variableX, variableY, variableZ));
-            } else {
-                target = DimPos.of(world, new BlockPos(variableX + pos.getX(), variableY + pos.getY(), variableZ + pos.getZ()));
-            }
-
-            targetChanged = !target.equals(oldTarget);
-            if (targetChanged) {
-                updateTargetBlock(oldTarget);
-                updateTargetBlock(target);
-                ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(world, pos), target));
-            }
+    private void updateProxyTarget() {
+        if (!haveVariablesUpdated()) {
+            return;
         }
+
+        boolean targetChanged;
+        DimPos oldTarget = target == null ? null : DimPos.of(target.getDimensionId(), target.getBlockPos());
+        if (posMode == 1) {
+            target = DimPos.of(world, new BlockPos(variableX, variableY, variableZ));
+        } else {
+            target = DimPos.of(world, new BlockPos(variableX + pos.getX(), variableY + pos.getY(), variableZ + pos.getZ()));
+        }
+
+        targetChanged = !target.equals(oldTarget);
+        if (targetChanged) {
+            updateTargetBlock(oldTarget);
+            updateTargetBlock(target);
+            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(world, pos), target));
+        }
+
 
         if (isTargetOutOfRange(target.getBlockPos())) {
             target = DimPos.of(world, pos);
-            isDirty = true;
         }
 
         if (targetChanged) {
             updateProxyAfterTargetChange();
             refreshFacePartNetwork();
-            isDirty = true;
         }
-
-        return isDirty;
     }
 
     private void updateProxyData() {
-        boolean isDisplayDirty = isDisplayDirty();
-        boolean updateProxyTarget = updateProxyTarget();
-
-        if (isDisplayDirty || updateProxyTarget) {
-            markDirty();
-        }
+        updateProxyTarget();
+        updateDisplay();
     }
 
     @Override
     protected void updateTileEntity() {
         super.updateTileEntity();
-        if (shouldSendUpdateEvent && getNetwork() != null) {
-            shouldSendUpdateEvent = false;
-            refreshVariables(true);
-        }
         if (!world.isRemote) {
+            if (shouldSendUpdateEvent && getNetwork() != null) {
+                shouldSendUpdateEvent = false;
+                refreshVariables(true);
+            }
+
             //first tick
             registerProxyInWorld();
 
@@ -443,27 +439,23 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //ProxyRenderLogic
     public IValue getDisplayValue() {
-        return display_value;
-    }
-
-    public void setDisplayValue(IValue displayValue) {
-        display_value = displayValue;
+        return displayValue;
     }
 
     public void rotateDisplayValue(EnumFacing side) {
         int ord = side.getIndex();
-        display_rotations[ord]++;
-        if (display_rotations[ord] >= 4) {
-            display_rotations[ord] = 0;
+        displayRotations[ord]++;
+        if (displayRotations[ord] >= 4) {
+            displayRotations[ord] = 0;
         }
         markDirty();
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayRotationPacket(DimPos.of(world, pos), display_rotations));
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayRotationPacket(DimPos.of(world, pos), displayRotations));
     }
 
     public void changeDisableRender() {
-        disable_render = !disable_render;
+        disableRender = !disableRender;
         markDirty();
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisableRenderPacket(DimPos.of(world, pos), disable_render));
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisableRenderPacket(DimPos.of(world, pos), disableRender));
     }
 
     public void sendRemoveRenderPacket() {
@@ -475,10 +467,10 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //ID Logic
     protected void refreshVariables(boolean sendVariablesUpdateEvent) {
-        evaluator_x.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
-        evaluator_y.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
-        evaluator_z.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
-        evaluator_display.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        evaluatorX.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        evaluatorY.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        evaluatorZ.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
+        evaluatorDisplay.refreshVariable(getNetwork(), sendVariablesUpdateEvent);
     }
 
     public int getVariableIntValue(InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator) throws EvaluationException {
@@ -496,26 +488,26 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     //Redstone
 
     public boolean setSideRedstonePower(EnumFacing side, IDynamicRedstone cap) {
-        int[] old_strong = strong_powers.clone();
-        int[] old_power = redstone_powers.clone();
+        int[] old_strong = strongPowers.clone();
+        int[] old_power = redstonePowers.clone();
         if (cap != null) {
-            redstone_powers[side.getIndex()] = cap.getRedstoneLevel();
+            redstonePowers[side.getIndex()] = cap.getRedstoneLevel();
             if (cap.isStrong()) {
-                strong_powers[side.getIndex()] = cap.getRedstoneLevel();
+                strongPowers[side.getIndex()] = cap.getRedstoneLevel();
             } else {
-                strong_powers[side.getIndex()] = 0;
+                strongPowers[side.getIndex()] = 0;
             }
         } else {
-            redstone_powers[side.getIndex()] = 0;
-            strong_powers[side.getIndex()] = 0;
+            redstonePowers[side.getIndex()] = 0;
+            strongPowers[side.getIndex()] = 0;
         }
         markDirty();
-        return redstone_powers != old_power || strong_powers != old_strong;
+        return redstonePowers != old_power || strongPowers != old_strong;
     }
 
     public int getRedstonePowerForTarget() {
         int power = 0;
-        for (int i : redstone_powers) {
+        for (int i : redstonePowers) {
             power = Math.max(power, i);
         }
         return power;
@@ -523,10 +515,55 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
 
     public int getStrongPowerForTarget() {
         int power = 0;
-        for (int i : strong_powers) {
+        for (int i : strongPowers) {
             power = Math.max(power, i);
         }
         return power;
     }
 
+
+    public int getPosMode() {
+        return posMode;
+    }
+
+    public int getUpdateTickDelay() {
+        return updateTickDelay;
+    }
+
+    public void updatedPosMode(int posMode) {
+        this.posMode = posMode;
+        posModeUpdated = true;
+    }
+
+    public InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> getEvaluatorX() {
+        return evaluatorX;
+    }
+
+    public InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> getEvaluatorY() {
+        return evaluatorY;
+    }
+
+    public InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> getEvaluatorZ() {
+        return evaluatorZ;
+    }
+
+    public InventoryVariableEvaluator<IValue> getEvaluatorDisplay() {
+        return evaluatorDisplay;
+    }
+
+    public DimPos getTarget() {
+        return target;
+    }
+
+    public boolean isDisableRender() {
+        return disableRender;
+    }
+
+    public int[] getDisplayRotations() {
+        return displayRotations;
+    }
+
+    public void setUpdateTickDelay(int updateTickDelay) {
+        this.updateTickDelay = updateTickDelay;
+    }
 }

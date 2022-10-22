@@ -59,9 +59,9 @@ public class WorldProxyManager {
         if (tileAccessProxyList == null) {
             return null;
         }
-        for (TileAccessProxy p : tileAccessProxyList) {
-            if (target.equals(p.target.getBlockPos())) {
-                return p;
+        for (TileAccessProxy tileAccessProxy : tileAccessProxyList) {
+            if (tileAccessProxy.getTarget() != null && tileAccessProxy.getTarget().getBlockPos().equals(target)) {
+                return tileAccessProxy;
             }
         }
 
@@ -72,17 +72,16 @@ public class WorldProxyManager {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.player.world.isRemote) {
             for (TileAccessProxy proxy : dimProxyMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList())) {
-                //Checking for null why don't know, but this fixes NPEs
-                if (proxy.target == null) {
+                if (proxy.getTarget() == null) {
                     DimPos proxyPosTarget = DimPos.of(proxy.getWorld(), proxy.getPos());
                     ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
-                            new LoginProxyRenderPacket(proxyPosTarget, proxyPosTarget, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
+                            new LoginProxyRenderPacket(proxyPosTarget, proxyPosTarget, proxy.isDisableRender(), proxy.getDisplayRotations(), proxy.getDisplayValue()),
                             (EntityPlayerMP) event.player);
                     continue;
                 }
 
                 ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
-                        new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()), proxy.target, proxy.disable_render, proxy.display_rotations, proxy.getDisplayValue()),
+                        new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()), proxy.getTarget(), proxy.isDisableRender(), proxy.getDisplayRotations(), proxy.getDisplayValue()),
                         (EntityPlayerMP) event.player);
 
             }
@@ -111,7 +110,7 @@ public class WorldProxyManager {
                 return;
             }
             for (TileAccessProxy proxy : proxies) {
-                if (proxy.target != null && !pos.equals(proxy.getPos()) && pos.equals(proxy.target.getBlockPos()) && worldIn.equals(proxy.target.getWorld())) {
+                if (!pos.equals(proxy.getPos()) && proxy.getTarget() != null && pos.equals(proxy.getTarget().getBlockPos())) {
                     proxy.updateProxyAfterTargetChange();
                 }
             }

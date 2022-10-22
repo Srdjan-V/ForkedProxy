@@ -15,13 +15,13 @@ import srki2k.forkedproxy.client.data.AccessProxyClientData;
 public class LoginProxyRenderPacket extends PacketCodec {
 
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
     @CodecField
-    private BlockPos target_pos;
+    private BlockPos targetPos;
     @CodecField
-    private int target_dim;
+    private int targetDim;
     @CodecField
     private NBTTagCompound nbt;
     @CodecField
@@ -37,11 +37,11 @@ public class LoginProxyRenderPacket extends PacketCodec {
         return false;
     }
 
-    public LoginProxyRenderPacket(DimPos proxy_pos, DimPos target_pos, boolean disable, int[] rotation, IValue value) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
-        this.target_pos = target_pos.getBlockPos();
-        this.target_dim = target_pos.getDimensionId();
+    public LoginProxyRenderPacket(DimPos proxyDimPos, DimPos targetDimPos, boolean disable, int[] rotation, IValue value) {
+        this.proxyPos = proxyDimPos.getBlockPos();
+        this.proxyDim = proxyDimPos.getDimensionId();
+        this.targetPos = targetDimPos.getBlockPos();
+        this.targetDim = targetDimPos.getDimensionId();
         this.disable = disable;
 
         NBTTagCompound nbt = new NBTTagCompound();
@@ -58,17 +58,15 @@ public class LoginProxyRenderPacket extends PacketCodec {
 
     @Override
     public void actionClient(World world, EntityPlayer player) {
-        AccessProxyClientData accessProxyClientData = AccessProxyClientData.getInstance();
-
         IValue variable = null;
 
         if (!nbt.isEmpty()) {
             variable = ValueHelpers.deserialize(nbt);
         }
 
-        accessProxyClientData.putAll(
-                DimPos.of(this.proxy_dim, this.proxy_pos),
-                DimPos.of(this.target_dim, this.target_pos),
+        AccessProxyClientData.getInstance().putAll(
+                DimPos.of(this.proxyDim, this.proxyPos),
+                DimPos.of(this.targetDim, this.targetPos),
                 this.disable,
                 this.rotation.getIntArray("rot"),
                 variable);

@@ -126,10 +126,10 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
 
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         TileAccessProxy tile = getContainer().getTile();
-        errorX.drawBackground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, ERRORS_X + 36 * 0 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastXOkId));
-        errorY.drawBackground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, ERRORS_X + 36 * 1 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastYOkId));
-        errorZ.drawBackground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastZOkId));
-        errorDisplay.drawBackground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
+        errorX.drawBackground(tile.getEvaluatorX().getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, ERRORS_X + 36 * 0 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastXOkId));
+        errorY.drawBackground(tile.getEvaluatorY().getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, ERRORS_X + 36 * 1 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastYOkId));
+        errorZ.drawBackground(tile.getEvaluatorZ().getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastZOkId));
+        errorDisplay.drawBackground(tile.getEvaluatorDisplay().getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
 
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.ticks"), offsetX + guiLeft + 27 + 9+11, offsetY + guiTop + 24+2, 4210752);
         numberFieldUpdateInterval.drawTextBox(Minecraft.getMinecraft(), mouseX - guiLeft, mouseY - guiTop);
@@ -168,9 +168,9 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         GlStateManager.translate(1, 1, 1);
         TileAccessProxy tile = getContainer().getTile();
-        errorX.drawForeground(tile.evaluator_x.getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
-        errorY.drawForeground(tile.evaluator_y.getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
-        errorZ.drawForeground(tile.evaluator_z.getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
-        errorDisplay.drawForeground(tile.evaluator_display.getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorX.drawForeground(tile.getEvaluatorX().getErrors(), ERRORS_X + 36 * 0 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorY.drawForeground(tile.getEvaluatorY().getErrors(), ERRORS_X + 36 * 1 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorZ.drawForeground(tile.getEvaluatorZ().getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
+        errorDisplay.drawForeground(tile.getEvaluatorDisplay().getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, mouseX, mouseY, this, guiLeft, guiTop);
     }
 }

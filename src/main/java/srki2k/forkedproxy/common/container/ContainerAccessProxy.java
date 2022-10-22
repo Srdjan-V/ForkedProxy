@@ -37,10 +37,10 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
     @Override
     public void detectAndSendChanges() {
         super.detectAndSendChanges();
-        ValueNotifierHelpers.setValue(this, lastXOkId, getTile().variableIntegerOk(getTile().evaluator_x) ? 1 : 0);
-        ValueNotifierHelpers.setValue(this, lastYOkId, getTile().variableIntegerOk(getTile().evaluator_y) ? 1 : 0);
-        ValueNotifierHelpers.setValue(this, lastZOkId, getTile().variableIntegerOk(getTile().evaluator_z) ? 1 : 0);
-        ValueNotifierHelpers.setValue(this, lastDisplayOkId, getTile().variableOk(getTile().evaluator_display) ? 1 : 0);
+        ValueNotifierHelpers.setValue(this, lastXOkId, getTile().variableIntegerOk(getTile().getEvaluatorX()) ? 1 : 0);
+        ValueNotifierHelpers.setValue(this, lastYOkId, getTile().variableIntegerOk(getTile().getEvaluatorY()) ? 1 : 0);
+        ValueNotifierHelpers.setValue(this, lastZOkId, getTile().variableIntegerOk(getTile().getEvaluatorZ()) ? 1 : 0);
+        ValueNotifierHelpers.setValue(this, lastDisplayOkId, getTile().variableOk(getTile().getEvaluatorDisplay()) ? 1 : 0);
     }
 
     public boolean variableOk(int valueId) {
@@ -49,8 +49,8 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
 
     @Override
     protected void initializeValues() {
-        ValueNotifierHelpers.setValue(this, lastPosModeValueId, getTile().posMode);
-        ValueNotifierHelpers.setValue(this, lastUpdateTickDelayID, getTile().updateTickDelay);
+        ValueNotifierHelpers.setValue(this, lastPosModeValueId, getTile().getPosMode());
+        ValueNotifierHelpers.setValue(this, lastUpdateTickDelayID, getTile().getUpdateTickDelay());
     }
 
     public int getLastPosModeValue() {
@@ -66,11 +66,10 @@ public class ContainerAccessProxy extends TileInventoryContainerConfigurable<Til
         super.onUpdate(valueId, value);
         if (!getTile().getWorld().isRemote) {
             if (valueId == lastPosModeValueId) {
-                getTile().posMode = getLastPosModeValue();
-                getTile().posModeUpdated = true;
+                getTile().updatedPosMode(getLastPosModeValue());
             }
             if (valueId == lastUpdateTickDelayID) {
-                getTile().updateTickDelay = getLastUpdateValue();
+                getTile().setUpdateTickDelay(getLastUpdateValue());
             }
         }
     }

@@ -1,14 +1,16 @@
 package srki2k.forkedproxy.mixin;
 
-import srki2k.forkedproxy.ForkedProxy;
-import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 import net.minecraft.tileentity.TileEntity;
 import org.cyclops.integrateddynamics.api.part.PartPos;
 import org.cyclops.integrateddynamics.api.part.PartTarget;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import srki2k.forkedproxy.ForkedProxy;
+import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 @SuppressWarnings("SpellCheckingInspection")
 @Mixin(PartTarget.class)
@@ -20,8 +22,8 @@ public class MixinPartTarget {
             return;
         }
         TileEntity te = target.getPos().getWorld().getTileEntity(target.getPos().getBlockPos());
-        if (te instanceof TileAccessProxy && ((TileAccessProxy) te).target != null) {
-            callback.setReturnValue(PartPos.of(((TileAccessProxy) te).target, target.getSide()));
+        if (te instanceof TileAccessProxy && ((TileAccessProxy) te).getTarget() != null) {
+            callback.setReturnValue(PartPos.of(((TileAccessProxy) te).getTarget(), target.getSide()));
         }
     }
 
