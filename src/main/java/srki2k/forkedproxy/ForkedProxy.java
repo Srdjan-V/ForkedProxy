@@ -61,7 +61,9 @@ public class ForkedProxy extends ModBase {
     @Mod.EventHandler
     public final void init(FMLInitializationEvent event) {
         super.init(event);
-        IntegratedTunnelsCompat.init();
+        if (Constants.isIntegratedTunnelsLoaded()) {
+            IntegratedTunnelsCompat.init();
+        }
     }
 
     @Override

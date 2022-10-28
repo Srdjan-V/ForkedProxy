@@ -9,15 +9,11 @@ import net.minecraft.world.World;
 import org.cyclops.integratedtunnels.api.world.IBlockBreakHandler;
 import org.cyclops.integratedtunnels.api.world.IBlockBreakHandlerRegistry;
 import srki2k.forkedproxy.common.block.BlockAccessProxy;
-import srki2k.forkedproxy.util.Constants;
 
 public class IntegratedTunnelsCompat {
     public static void init() {
-        if (Constants.isIntegratedTunnelsLoaded()) {
-            IBlockBreakHandlerRegistry REGISTRY = org.cyclops.integratedtunnels.IntegratedTunnels._instance.getRegistryManager().getRegistry(IBlockBreakHandlerRegistry.class);
-            REGISTRY.register(BlockAccessProxy.getInstance(), new BlockBreakHandlerProxy());
-        }
-
+        IBlockBreakHandlerRegistry REGISTRY = org.cyclops.integratedtunnels.IntegratedTunnels._instance.getRegistryManager().getRegistry(IBlockBreakHandlerRegistry.class);
+        REGISTRY.register(BlockAccessProxy.getInstance(), new BlockBreakHandlerProxy());
     }
 
     static class BlockBreakHandlerProxy implements IBlockBreakHandler {
