@@ -17,20 +17,14 @@ public class AccessProxyClientData {
     private AccessProxyClientData() {
     }
 
-    private static final AccessProxyClientData _instance = new AccessProxyClientData();
-
-    public static AccessProxyClientData getInstance() {
-        return _instance;
-    }
-
-    private final HashMap<DimPos, ProxyPosData> proxyPosDataHashMap = new HashMap<>();
+    private static final HashMap<DimPos, ProxyPosData> proxyPosDataHashMap = new HashMap<>();
 
 
-    public void putAll(DimPos proxy, DimPos target, boolean disable, int[] rotation, IValue value) {
+    public static void putAll(DimPos proxy, DimPos target, boolean disable, int[] rotation, IValue value) {
         proxyPosDataHashMap.put(proxy, new ProxyPosData(target, value, rotation, disable));
     }
 
-    public void putTarget(DimPos proxy, DimPos target) {
+    public static void putTarget(DimPos proxy, DimPos target) {
         ProxyPosData proxyPosData = proxyPosDataHashMap.get(proxy);
         if (proxyPosData == null) {
             proxyPosData = new ProxyPosData();
@@ -39,7 +33,7 @@ public class AccessProxyClientData {
         proxyPosData.setTarget(target);
     }
 
-    public void putVariable(DimPos proxy, IValue variable) {
+    public static void putVariable(DimPos proxy, IValue variable) {
         ProxyPosData proxyPosData = proxyPosDataHashMap.get(proxy);
         if (proxyPosData == null) {
             proxyPosData = new ProxyPosData();
@@ -48,7 +42,7 @@ public class AccessProxyClientData {
         proxyPosData.setVariable(variable);
     }
 
-    public void putRotation(DimPos proxy, int[] rotation) {
+    public static void putRotation(DimPos proxy, int[] rotation) {
         ProxyPosData proxyPosData = proxyPosDataHashMap.get(proxy);
         if (proxyPosData == null) {
             proxyPosData = new ProxyPosData();
@@ -57,7 +51,7 @@ public class AccessProxyClientData {
         proxyPosData.setRotation(rotation);
     }
 
-    public void putDisable(DimPos proxy, boolean disable) {
+    public static void putDisable(DimPos proxy, boolean disable) {
         ProxyPosData proxyPosData = proxyPosDataHashMap.get(proxy);
         if (proxyPosData == null) {
             proxyPosData = new ProxyPosData();
@@ -67,20 +61,20 @@ public class AccessProxyClientData {
     }
 
 
-    public void remove(DimPos proxy) {
+    public static void remove(DimPos proxy) {
         proxyPosDataHashMap.remove(proxy);
     }
 
-    public Collection<ProxyPosData> getProxy() {
+    public static Collection<ProxyPosData> getProxy() {
         return proxyPosDataHashMap.values();
     }
 
-    public ProxyPosData getProxy(DimPos proxyPos) {
+    public static ProxyPosData getProxy(DimPos proxyPos) {
         return proxyPosDataHashMap.get(proxyPos);
     }
 
     @SubscribeEvent
-    public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.player.world.isRemote && event.player.equals(Minecraft.getMinecraft().player)) {
             proxyPosDataHashMap.clear();
         }

@@ -64,7 +64,7 @@ public class LoginProxyRenderPacket extends PacketCodec {
             variable = ValueHelpers.deserialize(nbt);
         }
 
-        AccessProxyClientData.getInstance().putAll(
+        AccessProxyClientData.putAll(
                 DimPos.of(this.proxyDim, this.proxyPos),
                 DimPos.of(this.targetDim, this.targetPos),
                 this.disable,

@@ -11,17 +11,17 @@ import org.cyclops.cyclopscore.network.PacketCodec;
 
 public class UpdateProxyDisableRenderPacket extends PacketCodec {
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
     @CodecField
     private boolean disable;
 
     public UpdateProxyDisableRenderPacket() { }
 
-    public UpdateProxyDisableRenderPacket(DimPos proxy_pos, boolean disable) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
+    public UpdateProxyDisableRenderPacket(DimPos proxy, boolean disable) {
+        proxyPos = proxy.getBlockPos();
+        proxyDim = proxy.getDimensionId();
         this.disable = disable;
     }
 
@@ -32,7 +32,7 @@ public class UpdateProxyDisableRenderPacket extends PacketCodec {
 
     @Override
     public void actionClient(World world, EntityPlayer player) {
-        AccessProxyClientData.getInstance().putDisable(DimPos.of(this.proxy_dim, this.proxy_pos), this.disable);
+        AccessProxyClientData.putDisable(DimPos.of(proxyDim, proxyPos), disable);
     }
 
     @Override

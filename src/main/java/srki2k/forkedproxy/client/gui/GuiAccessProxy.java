@@ -144,7 +144,7 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + guiLeft + 27 + 36 * 2 + 9, offsetY + guiTop + 70, 4210752);
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + guiLeft + 27 + 36 * 3 + 9, offsetY + guiTop + 70, 4210752);
 
-        ProxyPosData proxyPosData = AccessProxyClientData.getInstance().getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos()));
+        ProxyPosData proxyPosData = AccessProxyClientData.getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos()));
 
         String pos_str;
 

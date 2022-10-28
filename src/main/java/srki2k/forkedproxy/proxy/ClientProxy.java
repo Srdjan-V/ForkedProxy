@@ -21,6 +21,6 @@ public class ClientProxy extends ClientProxyComponent {
     public void registerEventHooks() {
         super.registerEventHooks();
         MinecraftForge.EVENT_BUS.register(AccessProxyTargetRenderer.class);
-        MinecraftForge.EVENT_BUS.register(AccessProxyClientData.getInstance());
+        MinecraftForge.EVENT_BUS.register(AccessProxyClientData.class);
     }
 }

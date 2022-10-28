@@ -11,15 +11,15 @@ import org.cyclops.cyclopscore.network.PacketCodec;
 
 public class RemoveProxyRenderPacket extends PacketCodec {
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
 
     public RemoveProxyRenderPacket() { }
 
-    public RemoveProxyRenderPacket(DimPos proxy_pos) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
+    public RemoveProxyRenderPacket(DimPos proxy) {
+        proxyPos = proxy.getBlockPos();
+        proxyDim = proxy.getDimensionId();
     }
 
     @Override
@@ -29,8 +29,8 @@ public class RemoveProxyRenderPacket extends PacketCodec {
 
     @Override
     public void actionClient(World world, EntityPlayer player) {
-        AccessProxyClientData.getInstance().remove(
-                DimPos.of(this.proxy_dim, this.proxy_pos)
+        AccessProxyClientData.remove(
+                DimPos.of(proxyDim, proxyPos)
         );
     }
 

@@ -9,7 +9,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
@@ -26,10 +25,6 @@ import java.util.stream.Collectors;
 
 public class WorldProxyManager {
     private WorldProxyManager() {
-    }
-
-    static {
-        MinecraftForge.EVENT_BUS.register(WorldProxyManager.class);
     }
 
     private static final HashMap<Integer, List<TileAccessProxy>> dimProxyMap = new HashMap<>();

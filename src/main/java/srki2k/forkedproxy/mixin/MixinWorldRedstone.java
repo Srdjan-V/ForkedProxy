@@ -16,7 +16,7 @@ import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 @Mixin(World.class)
 public abstract class MixinWorldRedstone {
 
-    @Shadow(aliases = "field_73011_w", remap = false)
+    @Shadow
     @Final
     public WorldProvider provider;
 

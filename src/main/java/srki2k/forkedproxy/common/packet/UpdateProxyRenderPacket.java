@@ -11,21 +11,21 @@ import org.cyclops.cyclopscore.network.PacketCodec;
 
 public class UpdateProxyRenderPacket extends PacketCodec {
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
     @CodecField
-    private BlockPos target_pos;
+    private BlockPos targetPos;
     @CodecField
-    private int target_dim;
+    private int targetDim;
 
     public UpdateProxyRenderPacket() { }
 
-    public UpdateProxyRenderPacket(DimPos proxy_pos, DimPos target_pos) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
-        this.target_pos = target_pos.getBlockPos();
-        this.target_dim = target_pos.getDimensionId();
+    public UpdateProxyRenderPacket(DimPos proxy, DimPos target) {
+        proxyPos = proxy.getBlockPos();
+        proxyDim = proxy.getDimensionId();
+        targetPos = target.getBlockPos();
+        targetDim = target.getDimensionId();
     }
 
     @Override
@@ -35,9 +35,9 @@ public class UpdateProxyRenderPacket extends PacketCodec {
 
     @Override
     public void actionClient(World world, EntityPlayer player) {
-        AccessProxyClientData.getInstance().putTarget(
-                DimPos.of(this.proxy_dim, this.proxy_pos),
-                DimPos.of(this.target_dim, this.target_pos)
+        AccessProxyClientData.putTarget(
+                DimPos.of(proxyDim, proxyPos),
+                DimPos.of(targetDim, targetPos)
         );
     }
 

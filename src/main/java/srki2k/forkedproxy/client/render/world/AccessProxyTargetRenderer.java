@@ -32,7 +32,7 @@ public class AccessProxyTargetRenderer {
         double offsetY = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
         double offsetZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
 
-        for (ProxyPosData proxyPosData : AccessProxyClientData.getInstance().getProxy()) {
+        for (ProxyPosData proxyPosData : AccessProxyClientData.getProxy()) {
             DimPos target = proxyPosData.getTarget();
 
             if (proxyPosData.isDisable() || target == null) {
@@ -60,7 +60,7 @@ public class AccessProxyTargetRenderer {
         GlStateManager.enableTexture2D();
 
         GlStateManager.enableRescaleNormal();
-        for (ProxyPosData proxyPosData : AccessProxyClientData.getInstance().getProxy()) {
+        for (ProxyPosData proxyPosData : AccessProxyClientData.getProxy()) {
             DimPos target = proxyPosData.getTarget();
             IValue value = proxyPosData.getVariable();
             int[] rotation = proxyPosData.getRotation();

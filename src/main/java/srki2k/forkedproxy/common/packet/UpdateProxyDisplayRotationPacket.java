@@ -12,17 +12,17 @@ import org.cyclops.cyclopscore.network.PacketCodec;
 
 public class UpdateProxyDisplayRotationPacket extends PacketCodec {
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
     @CodecField
     private NBTTagCompound rotation;
 
     public UpdateProxyDisplayRotationPacket() { }
 
-    public UpdateProxyDisplayRotationPacket(DimPos proxy_pos, int[] rotation) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
+    public UpdateProxyDisplayRotationPacket(DimPos proxy, int[] rotation) {
+        proxyPos = proxy.getBlockPos();
+        proxyDim = proxy.getDimensionId();
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setIntArray("rot", rotation);
         this.rotation = nbt;
@@ -35,7 +35,7 @@ public class UpdateProxyDisplayRotationPacket extends PacketCodec {
 
     @Override
     public void actionClient(World world, EntityPlayer player) {
-        AccessProxyClientData.getInstance().putRotation(DimPos.of(this.proxy_dim, this.proxy_pos), this.rotation.getIntArray("rot"));
+        AccessProxyClientData.putRotation(DimPos.of(proxyDim, proxyPos), rotation.getIntArray("rot"));
     }
 
     @Override

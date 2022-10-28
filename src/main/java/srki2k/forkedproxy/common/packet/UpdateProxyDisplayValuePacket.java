@@ -14,17 +14,17 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
 
 public class UpdateProxyDisplayValuePacket extends PacketCodec {
     @CodecField
-    private BlockPos proxy_pos;
+    private BlockPos proxyPos;
     @CodecField
-    private int proxy_dim;
+    private int proxyDim;
     @CodecField
     private NBTTagCompound nbt;
 
     public UpdateProxyDisplayValuePacket() { }
 
-    public UpdateProxyDisplayValuePacket(DimPos proxy_pos, IValue value) {
-        this.proxy_pos = proxy_pos.getBlockPos();
-        this.proxy_dim = proxy_pos.getDimensionId();
+    public UpdateProxyDisplayValuePacket(DimPos proxyPos, IValue value) {
+        this.proxyPos = proxyPos.getBlockPos();
+        this.proxyDim = proxyPos.getDimensionId();
         if (value == null) {
             this.nbt = new NBTTagCompound();
             return;
@@ -40,10 +40,10 @@ public class UpdateProxyDisplayValuePacket extends PacketCodec {
     @Override
     public void actionClient(World world, EntityPlayer player) {
         if (nbt.isEmpty()) {
-            AccessProxyClientData.getInstance().putVariable(DimPos.of(this.proxy_dim, this.proxy_pos), null);
+            AccessProxyClientData.putVariable(DimPos.of(proxyDim, proxyPos), null);
             return;
         }
-        AccessProxyClientData.getInstance().putVariable(DimPos.of(this.proxy_dim, this.proxy_pos), ValueHelpers.deserialize(nbt));
+        AccessProxyClientData.putVariable(DimPos.of(proxyDim, proxyPos), ValueHelpers.deserialize(nbt));
     }
 
     @Override

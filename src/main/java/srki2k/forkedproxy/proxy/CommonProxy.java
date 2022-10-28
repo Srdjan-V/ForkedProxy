@@ -1,9 +1,11 @@
 package srki2k.forkedproxy.proxy;
 
+import net.minecraftforge.common.MinecraftForge;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.network.PacketHandler;
 import org.cyclops.cyclopscore.proxy.CommonProxyComponent;
 import srki2k.forkedproxy.ForkedProxy;
+import srki2k.forkedproxy.common.datamanagement.WorldProxyManager;
 import srki2k.forkedproxy.common.packet.*;
 
 public class CommonProxy extends CommonProxyComponent {
@@ -22,5 +24,11 @@ public class CommonProxy extends CommonProxyComponent {
         packetHandler.register(UpdateProxyDisplayValuePacket.class);
         packetHandler.register(UpdateProxyDisplayRotationPacket.class);
         packetHandler.register(UpdateProxyDisableRenderPacket.class);
+    }
+
+    @Override
+    public void registerEventHooks() {
+        super.registerEventHooks();
+        MinecraftForge.EVENT_BUS.register(WorldProxyManager.class);
     }
 }
