@@ -34,7 +34,7 @@ import org.cyclops.integratedtunnels.core.part.PartTypeInterfacePositionedAddon;
 import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
-import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
+import srki2k.forkedproxy.common.datamanagement.WorldProxyManager;
 import srki2k.forkedproxy.common.id_network.AccessProxyNetworkElement;
 import srki2k.forkedproxy.common.packet.*;
 import srki2k.forkedproxy.util.Constants;
@@ -289,6 +289,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
                 if (displayValue == null) {
                     return;
                 }
+                displayValue = null;
             } else {
                 IValue value = variable.getValue();
                 if (value == displayValue) {

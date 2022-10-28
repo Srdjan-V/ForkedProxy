@@ -45,7 +45,7 @@ minecraft {
     }
     runs {
         client {
-            workingDirectory project.file('run/client')
+            workingDirectory project.file('run')
             if (project.use_coremod.toBoolean()) {
                 jvmArg '-Dfml.coreMods.load=' + coremod_plugin_class_name
             }
@@ -60,7 +60,7 @@ minecraft {
         }
 
         server {
-            workingDirectory project.file('run/server')
+            workingDirectory project.file('run')
             if (project.use_coremod.toBoolean()) {
                 jvmArg '-Dfml.coreMods.load=' + coremod_plugin_class_name
             }

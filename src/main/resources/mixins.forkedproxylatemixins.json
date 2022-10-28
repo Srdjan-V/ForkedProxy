@@ -1,4 +1,5 @@
 {
+  "required": true,
   "minVersion": "0.8",
   "package": "srki2k.forkedproxy.mixin",
   "compatibilityLevel": "JAVA_8",

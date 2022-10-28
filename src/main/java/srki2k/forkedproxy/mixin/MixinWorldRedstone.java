@@ -10,12 +10,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
+import srki2k.forkedproxy.common.datamanagement.WorldProxyManager;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 @Mixin(World.class)
 public abstract class MixinWorldRedstone {
-    @Shadow
+
+    @Shadow(aliases = "field_73011_w", remap = false)
     @Final
     public WorldProvider provider;
 
@@ -26,10 +27,7 @@ public abstract class MixinWorldRedstone {
             return;
         }
 
-        int max_power = callback.getReturnValue();
-        max_power = Math.max(max_power, proxy.getRedstonePowerForTarget());
-        callback.setReturnValue(max_power);
-
+        callback.setReturnValue(Math.max(callback.getReturnValue(), proxy.getRedstonePowerForTarget()));
     }
 
     @Inject(at = @At("RETURN"), method = "getStrongPower(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I", cancellable = true)
@@ -39,9 +37,6 @@ public abstract class MixinWorldRedstone {
             return;
         }
 
-        int max_power = callback.getReturnValue();
-        max_power = Math.max(max_power, proxy.getStrongPowerForTarget());
-        callback.setReturnValue(max_power);
-
+        callback.setReturnValue(Math.max(callback.getReturnValue(), proxy.getStrongPowerForTarget()));
     }
 }

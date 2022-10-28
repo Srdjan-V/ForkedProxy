@@ -18,7 +18,7 @@ import org.cyclops.cyclopscore.init.RecipeHandler;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import srki2k.forkedproxy.common.block.BlockAccessProxyConfig;
 import srki2k.forkedproxy.common.compat.integratedtunnels.IntegratedTunnelsCompat;
-import srki2k.forkedproxy.common.datamanegmant.WorldProxyManager;
+import srki2k.forkedproxy.common.datamanagement.WorldProxyManager;
 import srki2k.forkedproxy.util.Constants;
 
 @Mod(

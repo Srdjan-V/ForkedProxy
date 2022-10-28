@@ -1,4 +1,4 @@
-package srki2k.forkedproxy.common.datamanegmant;
+package srki2k.forkedproxy.common.datamanagement;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -9,7 +9,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
@@ -24,10 +24,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = ForkedProxy.MODID)
 public class WorldProxyManager {
-
     private WorldProxyManager() {
+    }
+
+    static {
+        MinecraftForge.EVENT_BUS.register(WorldProxyManager.class);
     }
 
     private static final HashMap<Integer, List<TileAccessProxy>> dimProxyMap = new HashMap<>();
