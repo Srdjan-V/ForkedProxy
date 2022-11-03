@@ -1,7 +1,9 @@
-IntegratedProxy
+ForkedProxy
 ==================
 
-Integrated Proxy is an addon mod for [Integrated Dynamics](https://www.curseforge.com/minecraft/mc-mods/integrated-dynamics "Integrated Dynamics"). It allows you to redirect the part's target to another position.  
+ForkedProxy is a fork of Integrated Proxy for 1.12.2 with a small rewrite and bug fixes
+
+ForkedProxy an addon mod for [Integrated Dynamics](https://www.curseforge.com/minecraft/mc-mods/integrated-dynamics "Integrated Dynamics"). It allows you to redirect the part's target to another position.  
 
 How to Use
 ==================
