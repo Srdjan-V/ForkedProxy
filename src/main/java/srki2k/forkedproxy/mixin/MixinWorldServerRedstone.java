@@ -18,8 +18,8 @@ import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 @SuppressWarnings("all")
 @Mixin(WorldServer.class)
-public abstract class MixinWorldRedstone extends World {
-    protected MixinWorldRedstone(ISaveHandler saveHandlerIn, WorldInfo info, WorldProvider providerIn, Profiler profilerIn, boolean client) {
+public abstract class MixinWorldServerRedstone extends World {
+    protected MixinWorldServerRedstone(ISaveHandler saveHandlerIn, WorldInfo info, WorldProvider providerIn, Profiler profilerIn, boolean client) {
         super(saveHandlerIn, info, providerIn, profilerIn, client);
     }
 
@@ -30,7 +30,7 @@ public abstract class MixinWorldRedstone extends World {
     }
 
     @Inject(method = {"getRedstonePower(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I",
-            "func_175651_c(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"),remap = false, cancellable = true)
+            "func_175651_c(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"), remap = false, cancellable = true)
     public void getRedstonePower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
         TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
         if (proxy == null) {
@@ -47,7 +47,7 @@ public abstract class MixinWorldRedstone extends World {
     }
 
     @Inject(method = {"getStrongPower(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I",
-            "func_175627_a(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"),remap = false, cancellable = true)
+            "func_175627_a(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"), remap = false, cancellable = true)
     public void getStrongPower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
         TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
         if (proxy == null) {

@@ -1,11 +1,11 @@
 package srki2k.forkedproxy.client.data;
 
-import org.cyclops.cyclopscore.datastructure.DimPos;
+import net.minecraft.util.math.BlockPos;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 
 public class ProxyPosData {
 
-    private DimPos target;
+    private BlockPos target;
 
     private IValue variable;
 
@@ -14,16 +14,17 @@ public class ProxyPosData {
     private boolean isDisable;
 
     public ProxyPosData() {
+        this.rotation = new int[6];
     }
 
-    public ProxyPosData(DimPos target, IValue variable, int[] rotation, boolean isDisable) {
+    public ProxyPosData(BlockPos target, IValue variable, int[] rotation, boolean isDisable) {
         this.target = target;
         this.variable = variable;
         this.rotation = rotation;
         this.isDisable = isDisable;
     }
 
-    public DimPos getTarget() {
+    public BlockPos getTarget() {
         return target;
     }
 
@@ -39,7 +40,7 @@ public class ProxyPosData {
         return isDisable;
     }
 
-    public void setTarget(DimPos target) {
+    public void setTarget(BlockPos target) {
         this.target = target;
     }
 

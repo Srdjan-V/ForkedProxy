@@ -302,7 +302,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             displayValue = null;
         }
 
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(DimPos.of(world, pos), displayValue));
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayValuePacket(world.provider.getDimension(), pos, displayValue));
         markDirty();
     }
 
@@ -323,7 +323,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
         if (targetChanged) {
             updateTargetBlock(oldTarget);
             updateTargetBlock(target);
-            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(DimPos.of(world, pos), target));
+            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(world.provider.getDimension(), pos, target.getBlockPos()));
         }
 
 
@@ -450,18 +450,18 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             displayRotations[ord] = 0;
         }
         markDirty();
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayRotationPacket(DimPos.of(world, pos), displayRotations));
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisplayRotationPacket(world.provider.getDimension(), pos, displayRotations));
     }
 
     public void changeDisableRender() {
         disableRender = !disableRender;
         markDirty();
-        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisableRenderPacket(DimPos.of(world, pos), disableRender));
+        ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyDisableRenderPacket(world.provider.getDimension(), pos, disableRender));
     }
 
     public void sendRemoveRenderPacket() {
         if (!world.isRemote) {
-            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new RemoveProxyRenderPacket(DimPos.of(world, pos)));
+            ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new RemoveProxyRenderPacket(world.provider.getDimension(), pos));
         }
     }
 

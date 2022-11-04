@@ -4,6 +4,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
@@ -11,17 +12,16 @@ import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import org.cyclops.cyclopscore.datastructure.DimPos;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
 import srki2k.forkedproxy.ForkedProxy;
 import srki2k.forkedproxy.common.packet.LoginProxyRenderPacket;
 import srki2k.forkedproxy.common.tileentity.TileAccessProxy;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class WorldProxyManager {
     private WorldProxyManager() {
@@ -67,22 +67,46 @@ public class WorldProxyManager {
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!event.player.world.isRemote) {
-            for (TileAccessProxy proxy : dimProxyMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList())) {
-                if (proxy.getTarget() == null) {
-                    DimPos proxyPosTarget = DimPos.of(proxy.getWorld(), proxy.getPos());
-                    ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
-                            new LoginProxyRenderPacket(proxyPosTarget, proxyPosTarget, proxy.isDisableRender(), proxy.getDisplayRotations(), proxy.getDisplayValue()),
-                            (EntityPlayerMP) event.player);
-                    continue;
+        if (event.player.world.isRemote) {
+            return;
+        }
+
+        NBTTagCompound topNbt = new NBTTagCompound();
+        for (Integer proxyDim : dimProxyMap.keySet()) {
+            List<TileAccessProxy> proxyList = dimProxyMap.get(proxyDim);
+
+            NBTTagCompound allProxysInDimNbt = new NBTTagCompound();
+            topNbt.setTag(String.valueOf(proxyDim), allProxysInDimNbt);
+
+            for (int i = 0; i < proxyList.size(); i++) {
+                TileAccessProxy proxy = proxyList.get(i);
+
+                NBTTagCompound proxyNbt = new NBTTagCompound();
+                allProxysInDimNbt.setTag("proxyID:" + i, proxyNbt);
+
+                int[] proxyPos = {proxy.getPos().getX(), proxy.getPos().getY(), proxy.getPos().getZ()};
+                proxyNbt.setIntArray("proxyPos", proxyPos);
+
+                if (proxy.getTarget() != null) {
+                    proxyNbt.setIntArray("proxyTarget",
+                            new int[]{proxy.getTarget().getBlockPos().getX(),
+                                    proxy.getTarget().getBlockPos().getY(),
+                                    proxy.getTarget().getBlockPos().getZ()});
                 }
 
-                ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(
-                        new LoginProxyRenderPacket(DimPos.of(proxy.getWorld(), proxy.getPos()), proxy.getTarget(), proxy.isDisableRender(), proxy.getDisplayRotations(), proxy.getDisplayValue()),
-                        (EntityPlayerMP) event.player);
+                proxyNbt.setBoolean("disableRender", proxy.isDisableRender());
+                proxyNbt.setIntArray("displayRotations", proxy.getDisplayRotations());
 
+                IValue displayValue = proxy.getDisplayValue();
+                if (displayValue == null) {
+                    proxyNbt.setTag("displayValue", new NBTTagCompound());
+                } else {
+                    proxyNbt.setTag("displayValue", ValueHelpers.serialize(displayValue));
+                }
             }
         }
+
+        ForkedProxy.INSTANCE.getPacketHandler().sendToPlayer(new LoginProxyRenderPacket(topNbt), (EntityPlayerMP) event.player);
     }
 
     public static void cleanExistingTiles() {

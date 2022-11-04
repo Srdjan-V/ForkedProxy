@@ -9,10 +9,10 @@ import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.integrateddynamics.api.client.render.valuetype.IValueTypeWorldRenderer;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.client.render.valuetype.ValueTypeWorldRenderers;
@@ -20,9 +20,16 @@ import org.lwjgl.opengl.GL11;
 import srki2k.forkedproxy.client.data.AccessProxyClientData;
 import srki2k.forkedproxy.client.data.ProxyPosData;
 
+import java.util.Collection;
+
 public class AccessProxyTargetRenderer {
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
+        Collection<ProxyPosData> proxyPosDataList = AccessProxyClientData.getProxysInDim(Minecraft.getMinecraft().world.provider.getDimension());
+        if (proxyPosDataList == null) {
+            return;
+        }
+
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.disableTexture2D();
 
@@ -32,36 +39,35 @@ public class AccessProxyTargetRenderer {
         double offsetY = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
         double offsetZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
 
-        for (ProxyPosData proxyPosData : AccessProxyClientData.getProxy()) {
-            DimPos target = proxyPosData.getTarget();
+        for (ProxyPosData proxyPosData : proxyPosDataList) {
+            BlockPos target = proxyPosData.getTarget();
 
             if (proxyPosData.isDisable() || target == null) {
                 continue;
             }
 
             Vec3d target_vec = new Vec3d(
-                    target.getBlockPos().getX(),
-                    target.getBlockPos().getY(),
-                    target.getBlockPos().getZ()
+                    target.getX(),
+                    target.getY(),
+                    target.getZ()
             );
             GlStateManager.glLineWidth((float) (8.0d / player.getPositionVector().distanceTo(target_vec)));
 
-            if (target.getDimensionId() == Minecraft.getMinecraft().world.provider.getDimension()) {
-                GlStateManager.pushMatrix();
-                Tessellator tessellator = Tessellator.getInstance();
-                BufferBuilder bufferbuilder = tessellator.getBuffer();
-                bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-                GlStateManager.translate(-offsetX + target.getBlockPos().getX(), -offsetY + target.getBlockPos().getY(), -offsetZ + target.getBlockPos().getZ());
-                RenderGlobal.drawBoundingBox(bufferbuilder, -0.01D, -0.01D, -0.01D, 1.01D, 1.01D, 1.01D, 0.17F, 0.8F, 0.69F, 0.8F);
-                tessellator.draw();
-                GlStateManager.popMatrix();
-            }
+            GlStateManager.pushMatrix();
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder bufferbuilder = tessellator.getBuffer();
+            bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            GlStateManager.translate(-offsetX + target.getX(), -offsetY + target.getY(), -offsetZ + target.getZ());
+            RenderGlobal.drawBoundingBox(bufferbuilder, -0.01D, -0.01D, -0.01D, 1.01D, 1.01D, 1.01D, 0.17F, 0.8F, 0.69F, 0.8F);
+            tessellator.draw();
+            GlStateManager.popMatrix();
+
         }
         GlStateManager.enableTexture2D();
 
         GlStateManager.enableRescaleNormal();
-        for (ProxyPosData proxyPosData : AccessProxyClientData.getProxy()) {
-            DimPos target = proxyPosData.getTarget();
+        for (ProxyPosData proxyPosData : proxyPosDataList) {
+            BlockPos target = proxyPosData.getTarget();
             IValue value = proxyPosData.getVariable();
             int[] rotation = proxyPosData.getRotation();
 
@@ -76,7 +82,7 @@ public class AccessProxyTargetRenderer {
                     GlStateManager.pushMatrix();
 
                     float scale = 0.08F;
-                    GlStateManager.translate(-offsetX + target.getBlockPos().getX(), -offsetY + target.getBlockPos().getY(), -offsetZ + target.getBlockPos().getZ());
+                    GlStateManager.translate(-offsetX + target.getX(), -offsetY + target.getY(), -offsetZ + target.getZ());
                     translateToFacing(facing);
                     GlStateManager.scale(scale, scale, scale);
                     rotateSide(facing, rotation);
@@ -89,9 +95,9 @@ public class AccessProxyTargetRenderer {
                     }
                     renderer.renderValue(
                             null,
-                            -offsetX + target.getBlockPos().getX(),
-                            -offsetY + target.getBlockPos().getY(),
-                            -offsetZ + target.getBlockPos().getZ(),
+                            -offsetX + target.getX(),
+                            -offsetY + target.getY(),
+                            -offsetZ + target.getZ(),
                             partialTicks,
                             0,
                             facing,

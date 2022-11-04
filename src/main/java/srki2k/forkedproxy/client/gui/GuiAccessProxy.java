@@ -7,9 +7,9 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import org.cyclops.cyclopscore.client.gui.component.input.GuiNumberField;
 import org.cyclops.cyclopscore.client.gui.container.GuiContainerConfigurable;
-import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
@@ -131,7 +131,7 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         errorZ.drawBackground(tile.getEvaluatorZ().getErrors(), ERRORS_X + 36 * 2 + 9, ERRORS_Y, ERRORS_X + 36 * 2 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastZOkId));
         errorDisplay.drawBackground(tile.getEvaluatorDisplay().getErrors(), ERRORS_X + 36 * 3 + 9, ERRORS_Y, ERRORS_X + 36 * 3 + 9, ERRORS_Y, this, guiLeft, guiTop, getContainer().variableOk(getContainer().lastDisplayOkId));
 
-        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.ticks"), offsetX + guiLeft + 27 + 9+11, offsetY + guiTop + 24+2, 4210752);
+        drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.ticks"), offsetX + guiLeft + 27 + 9 + 11, offsetY + guiTop + 24 + 2, 4210752);
         numberFieldUpdateInterval.drawTextBox(Minecraft.getMinecraft(), mouseX - guiLeft, mouseY - guiTop);
 
         if (this.getContainer().getLastPosModeValue() == 0) {
@@ -144,20 +144,20 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.z"), offsetX + guiLeft + 27 + 36 * 2 + 9, offsetY + guiTop + 70, 4210752);
         drawCenteredString(fontRenderer, I18n.format("integrated_proxy.gui.access_proxy.display_value"), offsetX + guiLeft + 27 + 36 * 3 + 9, offsetY + guiTop + 70, 4210752);
 
-        ProxyPosData proxyPosData = AccessProxyClientData.getProxy(DimPos.of(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos()));
+        ProxyPosData proxyPosData = AccessProxyClientData.getProxyData(getContainer().getTile().getWorld().provider.getDimension(), getContainer().getTile().getPos());
 
         String pos_str;
 
         if (proxyPosData != null && proxyPosData.getTarget() != null) {
-            DimPos target = proxyPosData.getTarget();
+            BlockPos target = proxyPosData.getTarget();
             pos_str = I18n.format(
                     "integrated_proxy.gui.access_proxy.display_pos",
-                    target.getBlockPos().getX(),
-                    target.getBlockPos().getY(),
-                    target.getBlockPos().getZ()
+                    target.getX(),
+                    target.getY(),
+                    target.getZ()
             );
         } else {
-            pos_str = "null";
+            pos_str = "Init";
         }
         RenderHelpers.drawScaledCenteredString(fontRenderer, pos_str, getGuiLeftTotal() + 94, getGuiTopTotal() + 11, 76, ValueTypes.INTEGER.getDisplayColor());
     }

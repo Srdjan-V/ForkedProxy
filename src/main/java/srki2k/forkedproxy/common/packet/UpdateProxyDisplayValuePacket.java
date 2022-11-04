@@ -1,16 +1,15 @@
 package srki2k.forkedproxy.common.packet;
 
-import srki2k.forkedproxy.client.data.AccessProxyClientData;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.network.CodecField;
 import org.cyclops.cyclopscore.network.PacketCodec;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
+import srki2k.forkedproxy.client.data.AccessProxyClientData;
 
 public class UpdateProxyDisplayValuePacket extends PacketCodec {
     @CodecField
@@ -20,11 +19,12 @@ public class UpdateProxyDisplayValuePacket extends PacketCodec {
     @CodecField
     private NBTTagCompound nbt;
 
-    public UpdateProxyDisplayValuePacket() { }
+    public UpdateProxyDisplayValuePacket() {
+    }
 
-    public UpdateProxyDisplayValuePacket(DimPos proxyPos, IValue value) {
-        this.proxyPos = proxyPos.getBlockPos();
-        this.proxyDim = proxyPos.getDimensionId();
+    public UpdateProxyDisplayValuePacket(int proxyDim, BlockPos proxyPos, IValue value) {
+        this.proxyDim = proxyDim;
+        this.proxyPos = proxyPos;
         if (value == null) {
             this.nbt = new NBTTagCompound();
             return;
@@ -40,12 +40,13 @@ public class UpdateProxyDisplayValuePacket extends PacketCodec {
     @Override
     public void actionClient(World world, EntityPlayer player) {
         if (nbt.isEmpty()) {
-            AccessProxyClientData.putVariable(DimPos.of(proxyDim, proxyPos), null);
+            AccessProxyClientData.putVariable(proxyDim, proxyPos, null);
             return;
         }
-        AccessProxyClientData.putVariable(DimPos.of(proxyDim, proxyPos), ValueHelpers.deserialize(nbt));
+        AccessProxyClientData.putVariable(proxyDim, proxyPos, ValueHelpers.deserialize(nbt));
     }
 
     @Override
-    public void actionServer(World world, EntityPlayerMP player) { }
+    public void actionServer(World world, EntityPlayerMP player) {
+    }
 }
