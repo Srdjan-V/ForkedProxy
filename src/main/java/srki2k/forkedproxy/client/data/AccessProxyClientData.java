@@ -59,15 +59,18 @@ public class AccessProxyClientData {
         HashMap<BlockPos, ProxyPosData> proxyDimMap = proxyPosDataHashMap.get(proxyDim);
         if (proxyDimMap != null) {
             proxyDimMap.remove(proxyPos);
+            if (proxyDimMap.isEmpty()) {
+                proxyPosDataHashMap.remove(proxyDim);
+            }
         }
     }
 
+    public static boolean dimCointainsProxy(int dim) {
+        return proxyPosDataHashMap.get(dim) != null;
+    }
+
     public static Collection<ProxyPosData> getProxysInDim(int dim) {
-        HashMap<BlockPos, ProxyPosData> proxyPosData = proxyPosDataHashMap.get(dim);
-        if (proxyPosData == null) {
-            return null;
-        }
-        return proxyPosData.values();
+        return proxyPosDataHashMap.get(dim).values();
     }
 
     public static ProxyPosData getProxyData(int dim, BlockPos blockPos) {

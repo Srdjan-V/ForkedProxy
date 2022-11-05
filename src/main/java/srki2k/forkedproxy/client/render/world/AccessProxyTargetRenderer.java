@@ -25,10 +25,11 @@ import java.util.Collection;
 public class AccessProxyTargetRenderer {
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
-        Collection<ProxyPosData> proxyPosDataList = AccessProxyClientData.getProxysInDim(Minecraft.getMinecraft().world.provider.getDimension());
-        if (proxyPosDataList == null) {
+        if (!AccessProxyClientData.dimCointainsProxy(Minecraft.getMinecraft().world.provider.getDimension())) {
             return;
         }
+
+        Collection<ProxyPosData> proxyPosDataList = AccessProxyClientData.getProxysInDim(Minecraft.getMinecraft().world.provider.getDimension());
 
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.disableTexture2D();
