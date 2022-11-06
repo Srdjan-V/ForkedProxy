@@ -74,7 +74,12 @@ public class AccessProxyClientData {
     }
 
     public static ProxyPosData getProxyData(int dim, BlockPos blockPos) {
-        return proxyPosDataHashMap.get(dim).get(blockPos);
+        HashMap<BlockPos, ProxyPosData> dimProxyMap = proxyPosDataHashMap.get(dim);
+        if (dimProxyMap == null) {
+            return null;
+        }
+
+        return dimProxyMap.get(blockPos);
     }
 
     @SubscribeEvent

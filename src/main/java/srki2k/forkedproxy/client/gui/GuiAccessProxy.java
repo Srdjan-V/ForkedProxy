@@ -47,6 +47,7 @@ public class GuiAccessProxy extends GuiContainerConfigurable<ContainerAccessProx
         numberFieldUpdateInterval.setMinValue(1);
         numberFieldUpdateInterval.setTextColor(16777215);
         numberFieldUpdateInterval.setCanLoseFocus(true);
+        numberFieldUpdateInterval.setText(Integer.toString(getContainer().getLastUpdateValue()));
     }
 
     @Override
