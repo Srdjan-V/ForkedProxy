@@ -3,6 +3,8 @@ package io.github.srdjanv.forkedproxy.common.datamanagement;
 import io.github.srdjanv.forkedproxy.ForkedProxy;
 import io.github.srdjanv.forkedproxy.common.packet.LoginProxyRenderPacket;
 import io.github.srdjanv.forkedproxy.common.tileentity.TileAccessProxy;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,21 +21,19 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class WorldProxyManager {
     private WorldProxyManager() {
     }
 
-    private static final HashMap<Integer, List<TileAccessProxy>> dimProxyMap = new HashMap<>();
+    private static final Object2ObjectOpenHashMap<Integer, ObjectArrayList<TileAccessProxy>> dimProxyMap = new Object2ObjectOpenHashMap<>();
 
     public static void registerProxy(int dimensionId, TileAccessProxy proxy) {
-        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
+        ObjectArrayList<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
 
         if (tileAccessProxyList == null) {
-            tileAccessProxyList = new ArrayList<>();
+            tileAccessProxyList = new ObjectArrayList<>();
             dimProxyMap.put(dimensionId, tileAccessProxyList);
             proxy.getWorld().addEventListener(ProxyWorldEventListener.getInstance());
         }
@@ -42,7 +42,7 @@ public class WorldProxyManager {
     }
 
     public static void unRegisterProxy(int dimensionId, TileAccessProxy proxy) {
-        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
+        ObjectArrayList<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
         tileAccessProxyList.remove(proxy);
 
         if (tileAccessProxyList.isEmpty()) {
@@ -52,7 +52,7 @@ public class WorldProxyManager {
     }
 
     public static TileAccessProxy getRedstoneProxiesFromTarget(int dimensionId, BlockPos target) {
-        List<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
+        ObjectArrayList<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
         if (tileAccessProxyList == null) {
             return null;
         }

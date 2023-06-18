@@ -1,5 +1,7 @@
 package io.github.srdjanv.forkedproxy.client.data;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -9,7 +11,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 
 import java.util.Collection;
-import java.util.HashMap;
 
 @SideOnly(Side.CLIENT)
 public class AccessProxyClientData {
@@ -17,10 +18,10 @@ public class AccessProxyClientData {
     private AccessProxyClientData() {
     }
 
-    private static final HashMap<Integer, HashMap<BlockPos, ProxyPosData>> proxyPosDataHashMap = new HashMap<>();
+    private static final Int2ObjectOpenHashMap<Object2ObjectOpenHashMap<BlockPos, ProxyPosData>> proxyPosDataHashMap = new Int2ObjectOpenHashMap<>();
 
 
-    public static void putAll(int proxyDim, HashMap<BlockPos, ProxyPosData> proxyPosDataList) {
+    public static void putAll(int proxyDim, Object2ObjectOpenHashMap<BlockPos, ProxyPosData> proxyPosDataList) {
         proxyPosDataHashMap.put(proxyDim, proxyPosDataList);
     }
 
@@ -45,7 +46,7 @@ public class AccessProxyClientData {
     }
 
     private static ProxyPosData getProxyDimMap(int dim, BlockPos proxy) {
-        HashMap<BlockPos, ProxyPosData> proxyDimMap = proxyPosDataHashMap.computeIfAbsent(dim, k -> new HashMap<>());
+        Object2ObjectOpenHashMap<BlockPos, ProxyPosData> proxyDimMap = proxyPosDataHashMap.computeIfAbsent(dim, k -> new Object2ObjectOpenHashMap<>());
         ProxyPosData proxyPosData = proxyDimMap.get(proxy);
         if (proxyPosData == null) {
             proxyPosData = new ProxyPosData();
@@ -56,7 +57,7 @@ public class AccessProxyClientData {
 
 
     public static void remove(int proxyDim, BlockPos proxyPos) {
-        HashMap<BlockPos, ProxyPosData> proxyDimMap = proxyPosDataHashMap.get(proxyDim);
+        Object2ObjectOpenHashMap<BlockPos, ProxyPosData> proxyDimMap = proxyPosDataHashMap.get(proxyDim);
         if (proxyDimMap != null) {
             proxyDimMap.remove(proxyPos);
             if (proxyDimMap.isEmpty()) {
@@ -74,7 +75,7 @@ public class AccessProxyClientData {
     }
 
     public static ProxyPosData getProxyData(int dim, BlockPos blockPos) {
-        HashMap<BlockPos, ProxyPosData> dimProxyMap = proxyPosDataHashMap.get(dim);
+        Object2ObjectOpenHashMap<BlockPos, ProxyPosData> dimProxyMap = proxyPosDataHashMap.get(dim);
         if (dimProxyMap == null) {
             return null;
         }

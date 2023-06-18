@@ -1,6 +1,9 @@
 package io.github.srdjanv.forkedproxy.common.packet;
 
+import io.github.srdjanv.forkedproxy.ForkedProxy;
 import io.github.srdjanv.forkedproxy.client.data.AccessProxyClientData;
+import io.github.srdjanv.forkedproxy.client.data.ProxyPosData;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
@@ -9,10 +12,6 @@ import net.minecraft.world.World;
 import org.cyclops.cyclopscore.network.CodecField;
 import org.cyclops.cyclopscore.network.PacketCodec;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
-import io.github.srdjanv.forkedproxy.ForkedProxy;
-import io.github.srdjanv.forkedproxy.client.data.ProxyPosData;
-
-import java.util.HashMap;
 
 public class LoginProxyRenderPacket extends PacketCodec {
 
@@ -34,7 +33,7 @@ public class LoginProxyRenderPacket extends PacketCodec {
     @Override
     public void actionClient(World world, EntityPlayer player) {
         for (String dimKey : proxyData.getKeySet()) {
-            HashMap<BlockPos, ProxyPosData> proxyPosDataList = new HashMap<>();
+            Object2ObjectOpenHashMap<BlockPos, ProxyPosData> proxyPosDataList = new Object2ObjectOpenHashMap<>();
             NBTTagCompound dimNbt = (NBTTagCompound) proxyData.getTag(dimKey);
 
             for (String proxyKey : dimNbt.getKeySet()) {

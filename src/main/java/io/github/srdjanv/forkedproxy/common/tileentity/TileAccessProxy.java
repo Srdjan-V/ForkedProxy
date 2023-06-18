@@ -1,7 +1,12 @@
 package io.github.srdjanv.forkedproxy.common.tileentity;
 
 import io.github.srdjanv.forkedproxy.ForkedProxy;
+import io.github.srdjanv.forkedproxy.common.block.BlockAccessProxy;
+import io.github.srdjanv.forkedproxy.common.block.BlockAccessProxyConfig;
+import io.github.srdjanv.forkedproxy.common.datamanagement.WorldProxyManager;
+import io.github.srdjanv.forkedproxy.common.id_network.AccessProxyNetworkElement;
 import io.github.srdjanv.forkedproxy.common.packet.*;
+import io.github.srdjanv.forkedproxy.util.Constants;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -33,12 +38,6 @@ import org.cyclops.integrateddynamics.core.helper.PartHelpers;
 import org.cyclops.integrateddynamics.core.network.event.VariableContentsUpdatedEvent;
 import org.cyclops.integrateddynamics.core.tileentity.TileCableConnectableInventory;
 import org.cyclops.integratedtunnels.core.part.PartTypeInterfacePositionedAddon;
-import io.github.srdjanv.forkedproxy.common.block.BlockAccessProxy;
-import io.github.srdjanv.forkedproxy.common.block.BlockAccessProxyConfig;
-import io.github.srdjanv.forkedproxy.common.datamanagement.WorldProxyManager;
-import io.github.srdjanv.forkedproxy.common.id_network.AccessProxyNetworkElement;
-import io.github.srdjanv.forkedproxy.common.packet.*;
-import io.github.srdjanv.forkedproxy.util.Constants;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;

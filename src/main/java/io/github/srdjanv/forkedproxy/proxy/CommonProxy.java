@@ -1,13 +1,12 @@
 package io.github.srdjanv.forkedproxy.proxy;
 
 import io.github.srdjanv.forkedproxy.ForkedProxy;
+import io.github.srdjanv.forkedproxy.common.datamanagement.WorldProxyManager;
 import io.github.srdjanv.forkedproxy.common.packet.*;
 import net.minecraftforge.common.MinecraftForge;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.network.PacketHandler;
 import org.cyclops.cyclopscore.proxy.CommonProxyComponent;
-import io.github.srdjanv.forkedproxy.common.datamanagement.WorldProxyManager;
-import io.github.srdjanv.forkedproxy.common.packet.*;
 
 public class CommonProxy extends CommonProxyComponent {
     @Override
