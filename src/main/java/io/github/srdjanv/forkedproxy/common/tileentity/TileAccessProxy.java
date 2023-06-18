@@ -311,27 +311,20 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
             return;
         }
 
-        boolean targetChanged;
         DimPos oldTarget = target == null ? null : DimPos.of(target.getDimensionId(), target.getBlockPos());
         if (posMode == 1) {
             target = DimPos.of(world, new BlockPos(variableX, variableY, variableZ));
         } else {
             target = DimPos.of(world, new BlockPos(variableX + pos.getX(), variableY + pos.getY(), variableZ + pos.getZ()));
         }
-
-        targetChanged = !target.equals(oldTarget);
-        if (targetChanged) {
+        //if the target changed
+        if (!target.equals(oldTarget)) {
             updateTargetBlock(oldTarget);
             updateTargetBlock(target);
+            if (isTargetOutOfRange(target.getBlockPos())) {
+                target = DimPos.of(world, pos);
+            }
             ForkedProxy.INSTANCE.getPacketHandler().sendToAll(new UpdateProxyRenderPacket(world.provider.getDimension(), pos, target.getBlockPos()));
-        }
-
-
-        if (isTargetOutOfRange(target.getBlockPos())) {
-            target = DimPos.of(world, pos);
-        }
-
-        if (targetChanged) {
             updateProxyAfterTargetChange();
             refreshFacePartNetwork();
         }
