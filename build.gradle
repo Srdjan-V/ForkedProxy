@@ -1,79 +1,77 @@
-buildscript {
-    repositories {
-        maven {
-            name 'MixinGradle'
-            url 'https://repo.spongepowered.org/repository/maven-public'
-        }
-    }
-    dependencies {
-        if (project.use_mixins.toBoolean()) {
-            classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-        }
-    }
-}
+import org.jetbrains.gradle.ext.Gradle
 
 plugins {
-    id 'net.minecraftforge.gradle' version '5.1.+'
-    id 'wtf.gofancy.fancygradle' version '1.1.+'
-}
-
-apply {
-    plugin 'net.minecraftforge.gradle'
-    plugin 'java'
-    plugin 'idea'
-}
-
-fancyGradle {
-    patches {
-        resources
-        coremods
-        asm
-        codeChickenLib
-    }
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
+    id 'eclipse'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.16'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
 version = project.mod_version
 group = project.maven_group
 archivesBaseName = project.archives_base_name
 
-minecraft {
-
-    mappings channel: 'stable', version: '39-1.12'
-
-    if (project.has_access_transformer.toBoolean()) {
-        accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+// Set the toolchain version to decouple the Java we run Gradle with from the Java used to compile and run the mod
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+        // Azul covers the most platforms for Java 8 toolchains, crucially including MacOS arm64
+        vendor.set(org.gradle.jvm.toolchain.JvmVendorSpec.AZUL)
     }
-    runs {
-        client {
-            workingDirectory project.file('run')
-            if (project.use_coremod.toBoolean()) {
-                jvmArg '-Dfml.coreMods.load=' + coremod_plugin_class_name
-            }
-            if (project.use_mixins.toBoolean()) {
-                jvmArg '-Dmixin.hotSwap=true'
-                jvmArg '-Dmixin.checks.interfaces=true'
-                jvmArg '-Dmixin.debug=true'
-            }
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            environment 'MC_VERSION', '1.12.2'
-        }
-
-        server {
-            workingDirectory project.file('run')
-            if (project.use_coremod.toBoolean()) {
-                jvmArg '-Dfml.coreMods.load=' + coremod_plugin_class_name
-            }
-            if (project.use_mixins.toBoolean()) {
-                jvmArg '-Dmixin.hotSwap=true'
-                jvmArg '-Dmixin.checks.interfaces=true'
-            }
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            environment 'MC_VERSION', '1.12.2'
-        }
-    }
+    // Generate sources and javadocs jars when building and publishing
+    withSourcesJar()
+    // withJavadocJar()
 }
+
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
+
+minecraft {
+    mcVersion = '1.12.2'
+
+    // MCP Mappings
+    mcpMappingChannel = 'stable'
+    mcpMappingVersion = '39'
+
+    // Set username here, the UUID will be looked up automatically
+    username = 'Developer'
+
+    // Add any additional tweaker classes here
+    // extraTweakClasses.add('org.spongepowered.asm.launch.MixinTweaker')
+
+    // Add various JVM arguments here for runtime
+    def args = ["-ea:${project.group}"]
+    if (project.use_coremod.toBoolean()) {
+        args << '-Dfml.coreMods.load=' + coremod_plugin_class_name
+    }
+    if (project.use_mixins.toBoolean()) {
+        args << '-Dmixin.hotSwap=true'
+        args << '-Dmixin.checks.interfaces=true'
+        args << '-Dmixin.debug.export=true'
+    }
+    extraRunJvmArguments.addAll(args)
+
+    // Include and use dependencies' Access Transformer files
+    useDependencyAccessTransformers = true
+
+    // Add any properties you want to swap out for a dynamic value at build time here
+    // Any properties here will be added to a class at build time, the name can be configured below
+    // Example:
+    // injectedTags.put('VERSION', project.version)
+    // injectedTags.put('MOD_ID', project.archives_base_name)
+}
+
+// Generate a group.archives_base_name.Tags class
+tasks.injectTags.configure {
+    // Change Tags class' name here:
+    outputClassName.set("${project.group}.${project.archives_base_name}.Tags")
+}
+
 
 repositories {
     maven {
@@ -106,10 +104,6 @@ repositories {
         url = "https://maven.thiakil.com"
     }
     maven {
-        //url = "https://repo.spongepowered.org/repository/maven-public"
-        url = "https://repo.spongepowered.org/maven"
-    }
-    maven {
         name = "Cyclops Repo"
         url = "https://oss.jfrog.org/artifactory/oss-releases/"
     }
@@ -117,146 +111,165 @@ repositories {
 
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
-    implementation fg.deobf("org.cyclops.cyclopscore:CyclopsCore:1.12.2-${cyclopscore_version}")
-    implementation fg.deobf("org.cyclops.integratedterminals:IntegratedTerminals:1.12.2-${integratedterminals_version}")
-    implementation fg.deobf("org.cyclops.integratedtunnels:IntegratedTunnels:1.12.2-${integratedtunnels_version}")
-    implementation fg.deobf("org.cyclops.integratedcrafting:IntegratedCrafting:1.12.2-${integratedcrafting_version}")
+    implementation "org.cyclops.cyclopscore:CyclopsCore:1.12.2-${cyclopscore_version}:deobf"
 
-    implementation (fg.deobf("org.cyclops.integrateddynamics:IntegratedDynamics:1.12.2-${integrateddynamics_version}")) {
+
+    implementation "org.cyclops.integratedterminals:IntegratedTerminals:1.12.2-${integratedterminals_version}:deobf"
+    implementation "org.cyclops.integratedtunnels:IntegratedTunnels:1.12.2-${integratedtunnels_version}:deobf"
+    implementation "org.cyclops.integratedcrafting:IntegratedCrafting:1.12.2-${integratedcrafting_version}:deobf"
+
+    implementation ("org.cyclops.integrateddynamics:IntegratedDynamics:1.12.2-${integrateddynamics_version}:deobf") {
         exclude group: 'org.cyclops.cyclopscore', module: 'CyclopsCore'
     }
 
-    implementation (fg.deobf("org.cyclops.commoncapabilities:CommonCapabilities:1.12.2-${commoncapabilities_version}")) {
+    implementation ("org.cyclops.commoncapabilities:CommonCapabilities:1.12.2-${commoncapabilities_version}:deobf") {
         exclude group: 'org.cyclops.cyclopscore', module: 'CyclopsCore'
     }
 
-    compileOnly('zone.rong:mixinbooter:5.0')
-    runtimeOnly('zone.rong:mixinbooter:5.0')
-}
-
-sourceSets {
-    main {
-        if (project.use_mixins.toBoolean()) {
-            ext.refMap = 'mixins.' + archives_base_name + '.refmap.json'
-        }
-
-        java {
-            srcDirs = ["src/main/java"]
-        }
-
-        resources {
-            srcDirs = ["src/main/java", "src/main/resources"]
-        }
+    if (project.use_assetmover.toBoolean()) {
+        implementation 'com.cleanroommc:assetmover:2.5'
     }
 
-    test {
-        java {
-            srcDirs = ["src/test/java"]
+    // Example of deobfuscating a dependency
+    // implementation rfg.deobf('curse.maven:had-enough-items-557549:4543375')
+
+    //enables java 17 features on java 8
+    String jabelPlugin = 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+    String jna = 'net.java.dev.jna:jna-platform:5.13.0'
+    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+
+    annotationProcessor jabelPlugin
+    annotationProcessor jna
+    testAnnotationProcessor jabelPlugin
+    testAnnotationProcessor jna
+
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    if (project.use_mixins.toBoolean()) {
+        implementation 'zone.rong:mixinbooter:7.1'
+        // Change your mixin refmap name here:
+        String mixin = modUtils.enableMixins('org.spongepowered:mixin:0.8.3', "mixins.${project.archives_base_name}.refmap.json")
+        api (mixin) {
+            transitive = false
         }
-        resources {
-            srcDirs = ["src/test/resources"]
+        annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+        annotationProcessor 'com.google.guava:guava:24.1.1-jre'
+        annotationProcessor 'com.google.code.gson:gson:2.8.6'
+        annotationProcessor (mixin) {
+            transitive = false
         }
     }
-
-    // at compile time, put resources in same directories as classes
-    main.output.setResourcesDir(main.java.classesDirectory)
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+configure([tasks.compileJava, tasks.compileTestJava]) {
+    sourceCompatibility = 17 // for the IDE support
+    options.release = 8
+
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configure([tasks.javadoc]) {
+    javadocTool.set(javaToolchains.javadocToolFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    })
+}
+
+if (project.hasProperty("DCEVMJDK")) {
+    configure([tasks.runClient, tasks.runServer]) {
+        getJavaLauncher().set(javaToolchains.launcherFor({}))
+        setExecutable(project.property("DCEVMJDK"))
+    }
+}
+
+// Adds Access Transformer files to tasks
+if (project.use_access_transformer.toBoolean()) {
+    for (File at : sourceSets.getByName("main").resources.files) {
+        if (at.name.toLowerCase().endsWith("_at.cfg")) {
+            tasks.deobfuscateMergedJarToSrg.accessTransformerFiles.from(at)
+            tasks.srgifyBinpatchedJar.accessTransformerFiles.from(at)
+        }
+    }
+}
+processResources {
+    // This will ensure that this task is redone when the versions change
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', project.minecraft.version
+
+    // Replace various properties in mcmod.info and pack.mcmeta if applicable
+    filesMatching(['mcmod.info', 'pack.mcmeta']) { fcd ->
+        // Replace version and mcversion
+        fcd.expand (
+                'version': project.version,
+                'mcversion': project.minecraft.version
+        )
+    }
+
+    if (project.use_access_transformer.toBoolean()) {
+        rename '(.+_at.cfg)', 'META-INF/$1' // Make sure Access Transformer files are in META-INF folder
+    }
+}
 
 jar {
     manifest {
-        // noinspection GroovyAssignabilityCheck
         def attribute_map = [:]
         if (project.use_coremod.toBoolean()) {
             attribute_map['FMLCorePlugin'] = project.coremod_plugin_class_name
             if (project.include_mod.toBoolean()) {
                 attribute_map['FMLCorePluginContainsFMLMod'] = true
-                attribute_map['ForceLoadAsMod'] = project.gradle.startParameter.taskNames[0] == 'build'
+                attribute_map['ForceLoadAsMod'] = project.gradle.startParameter.taskNames[0] == "build"
             }
         }
-        if (project.use_mixins.toBoolean()) {
-            attribute_map['TweakClass'] = 'org.spongepowered.asm.launch.MixinTweaker'
+        if (project.use_access_transformer.toBoolean()) {
+            attribute_map['FMLAT'] = project.archives_base_name + '_at.cfg'
         }
         attributes(attribute_map)
     }
+    // Add all embedded dependencies into the jar
+    from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
 }
 
-jar.finalizedBy('reobfJar')
 
 
-import org.apache.tools.ant.filters.ReplaceTokens
-
-task filterTokens(type: Sync) {
-
-    inputs.property 'version', version
-
-    from sourceSets.main.java
-    filter(ReplaceTokens, tokens: [VERSION: version.toString()])
-    into "$buildDir/src/$sourceSets.main.name/$sourceSets.main.java.name"
-}
-
-compileJava.source = filterTokens.outputs
-
-processResources {
-    // required to allow file expansion later
-    duplicatesStrategy = 'include'
-
-    // this will ensure that this task is redone when the versions change.
-    inputs.property 'version', version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-
-        // replace version
-        expand 'version': version
+idea {
+    module {
+        inheritOutputDirs = true
     }
-
-    // copy everything else except the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-}
-
-if (project.build_deobfJar.toBoolean()) {
-    // Create deobf dev jars
-    task deobfJar(type: Jar) {
-        archiveClassifier.set("deobf")
-        from sourceSets.main.output
-    }
-}
-
-if (project.build_apiJar.toBoolean()) {
-    // Create API library jar
-    task apiZip(type: Jar) {
-        archiveClassifier.set("api")
-        from(sourceSets.main.java) {
-            include "name/api/**"
-        }
-        from(sourceSets.main.output) {
-            include "name/api/**"
+    project {
+        settings {
+            runConfigurations {
+                "1. Run Client"(Gradle) {
+                    taskNames = ["runClient"]
+                }
+                "2. Run Server"(Gradle) {
+                    taskNames = ["runServer"]
+                }
+                "3. Run Obfuscated Client"(Gradle) {
+                    taskNames = ["runObfClient"]
+                }
+                "4. Run Obfuscated Server"(Gradle) {
+                    taskNames = ["runObfServer"]
+                }
+            }
+            compiler.javac {
+                afterEvaluate {
+                    javacAdditionalOptions = "-encoding utf8"
+                    moduleJavacAdditionalOptions = [
+                            (project.name + ".main"): tasks.compileJava.options.compilerArgs.collect { '"' + it + '"' }.join(' ')
+                    ]
+                }
+            }
         }
     }
 }
 
-if (project.build_sourceJar.toBoolean()) {
-    // Create source jar
-    task sourcesJar(type: Jar) {
-        archiveClassifier.set("sources")
-        from sourceSets.main.allJava
-    }
-}
-
-artifacts {
-    if (project.build_deobfJar.toBoolean()) {
-        archives deobfJar
-    }
-    if (project.build_apiJar.toBoolean()) {
-        archives apiZip
-    }
-    if (project.build_sourceJar.toBoolean()) {
-        archives sourcesJar
-    }
+tasks.named("processIdeaSettings").configure {
+    dependsOn("injectTags")
 }

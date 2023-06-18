@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.srdjanv.forkedproxy.mixin",
+  "refmap": "mixins.forkedproxy.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinWorldServerRedstone"
+  ],
+  "client": [],
+  "server": []
+}
