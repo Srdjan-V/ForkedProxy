@@ -25,7 +25,7 @@ public class IntegratedTunnelsCompat {
 
         @Override
         public NonNullList<ItemStack> getDrops(IBlockState blockState, World world, BlockPos pos, EntityPlayer player) {
-            return null;
+            return NonNullList.create();
         }
 
         @Override

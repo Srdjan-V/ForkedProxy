@@ -6,7 +6,7 @@ plugins {
     id 'maven-publish'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
     id 'eclipse'
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.16'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.24'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
@@ -148,18 +148,17 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
 
     if (project.use_mixins.toBoolean()) {
-        implementation 'zone.rong:mixinbooter:7.1'
         // Change your mixin refmap name here:
-        String mixin = modUtils.enableMixins('org.spongepowered:mixin:0.8.3', "mixins.${project.archives_base_name}.refmap.json")
+        String mixin = modUtils.enableMixins('zone.rong:mixinbooter:8.6', "mixins.${project.archives_base_name}.refmap.json")
         api (mixin) {
             transitive = false
         }
-        annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
-        annotationProcessor 'com.google.guava:guava:24.1.1-jre'
-        annotationProcessor 'com.google.code.gson:gson:2.8.6'
         annotationProcessor (mixin) {
             transitive = false
         }
+        annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+        annotationProcessor 'com.google.guava:guava:32.1.2-jre'
+        annotationProcessor 'com.google.code.gson:gson:2.8.9'
     }
 }
 
@@ -180,13 +179,6 @@ configure([tasks.javadoc]) {
     javadocTool.set(javaToolchains.javadocToolFor {
         languageVersion = JavaLanguageVersion.of(17)
     })
-}
-
-if (project.hasProperty("DCEVMJDK")) {
-    configure([tasks.runClient, tasks.runServer]) {
-        getJavaLauncher().set(javaToolchains.launcherFor({}))
-        setExecutable(project.property("DCEVMJDK"))
-    }
 }
 
 // Adds Access Transformer files to tasks

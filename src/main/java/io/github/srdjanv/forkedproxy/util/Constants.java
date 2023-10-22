@@ -3,7 +3,7 @@ package io.github.srdjanv.forkedproxy.util;
 import net.minecraftforge.fml.common.Loader;
 
 public class Constants {
-    static boolean integratedTunnelsLoaded;
+    private static boolean integratedTunnelsLoaded;
 
     public static void init(){
         integratedTunnelsLoaded = Loader.isModLoaded("integratedtunnels");

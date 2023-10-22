@@ -53,9 +53,7 @@ public class WorldProxyManager {
 
     public static TileAccessProxy getRedstoneProxiesFromTarget(int dimensionId, BlockPos target) {
         ObjectArrayList<TileAccessProxy> tileAccessProxyList = dimProxyMap.get(dimensionId);
-        if (tileAccessProxyList == null) {
-            return null;
-        }
+        if (tileAccessProxyList == null) return null;
         for (TileAccessProxy tileAccessProxy : tileAccessProxyList) {
             if (tileAccessProxy.getTarget() != null && tileAccessProxy.getTarget().getBlockPos().equals(target)) {
                 return tileAccessProxy;

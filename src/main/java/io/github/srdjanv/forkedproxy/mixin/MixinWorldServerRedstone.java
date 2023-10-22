@@ -33,10 +33,7 @@ public abstract class MixinWorldServerRedstone extends World {
             "func_175651_c(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"), remap = false, cancellable = true)
     public void getRedstonePower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
         TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
-        if (proxy == null) {
-            return;
-        }
-
+        if (proxy == null) return;
         callback.setReturnValue(Math.max(callback.getReturnValue(), proxy.getRedstonePowerForTarget()));
     }
 
@@ -50,10 +47,7 @@ public abstract class MixinWorldServerRedstone extends World {
             "func_175627_a(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)I"}, at = @At("RETURN"), remap = false, cancellable = true)
     public void getStrongPower(BlockPos pos, EnumFacing facing, CallbackInfoReturnable<Integer> callback) {
         TileAccessProxy proxy = WorldProxyManager.getRedstoneProxiesFromTarget(provider.getDimension(), pos.offset(facing.getOpposite()));
-        if (proxy == null) {
-            return;
-        }
-
+        if (proxy == null) return;
         callback.setReturnValue(Math.max(callback.getReturnValue(), proxy.getStrongPowerForTarget()));
     }
 }

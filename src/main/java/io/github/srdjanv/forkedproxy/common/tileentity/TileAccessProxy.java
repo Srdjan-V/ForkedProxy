@@ -279,22 +279,16 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private void updateDisplay() {
-        if (disableRender) {
-            return;
-        }
+        if (disableRender) return;
 
         IVariable<IValue> variable = evaluatorDisplay.getVariable(getNetwork());
         try {
             if (variable == null) {
-                if (displayValue == null) {
-                    return;
-                }
+                if (displayValue == null) return;// return early if its already null, to need to send a null packet
                 displayValue = null;
             } else {
                 IValue value = variable.getValue();
-                if (value == displayValue) {
-                    return;
-                }
+                if (value == displayValue) return;
                 displayValue = value;
             }
 
@@ -307,11 +301,9 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     private void updateProxyTarget() {
-        if (!haveVariablesUpdated()) {
-            return;
-        }
+        if (!haveVariablesUpdated()) return;
 
-        DimPos oldTarget = target == null ? null : DimPos.of(target.getDimensionId(), target.getBlockPos());
+        DimPos oldTarget = target;
         if (posMode == 1) {
             target = DimPos.of(world, new BlockPos(variableX, variableY, variableZ));
         } else {
@@ -406,9 +398,7 @@ public class TileAccessProxy extends TileCableConnectableInventory implements ID
     }
 
     public boolean variableIntegerOk(InventoryVariableEvaluator<ValueTypeInteger.ValueInteger> evaluator) {
-        if (evaluator.getVariable(getNetwork()) == null) {
-            return false;
-        }
+        if (evaluator.getVariable(getNetwork()) == null) return false;
         return evaluator.hasVariable() &&
                 evaluator.getVariable(getNetwork()).getType() instanceof ValueTypeInteger &&
                 evaluator.getErrors().isEmpty();
