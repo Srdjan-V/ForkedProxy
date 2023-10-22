@@ -32,6 +32,14 @@ jobs:
           file: "${{ steps.get_mod_name.outputs.mod_name }}-${{ steps.get_version.outputs.version }}.jar"
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Retrieve Dev Jar from Latest Release
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          repo: "${{ github.repository }}"
+          version: "tags/v${{ steps.get_version.outputs.version }}"
+          file: "${{ steps.get_mod_name.outputs.mod_name }}-${{ steps.get_version.outputs.version }}-dev.jar"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Retrieve Source from Latest Release
         uses: dsaltares/fetch-gh-release-asset@master
         with:
@@ -52,6 +60,16 @@ jobs:
           changelog_type: "markdown"
           relations: "mixin-booter:requiredDependency,cyclops-core:requiredDependency,integrated-dynamics:requiredDependency,integrated-tunnels:optionalDependency"
           file_path: "${{ steps.get_mod_name.outputs.mod_name }}-${{ steps.get_version.outputs.version }}.jar"
+          project_id: "${{ secrets.CURSEFORGE_PROJECT_ID }}"
+          token: "${{ secrets.CURSEFORGE_API_KEY }}"
+
+      - name: Create CurseForge Dev Jar Release
+        uses: itsmeow/curseforge-upload@v3
+        with:
+          game_endpoint: "minecraft"
+          release_type: "release"
+          parent_file_id: "${{ steps.release-curseforge.outputs.id }}"
+          file_path: "${{ steps.get_mod_name.outputs.mod_name }}-${{ steps.get_version.outputs.version }}-dev.jar"
           project_id: "${{ secrets.CURSEFORGE_PROJECT_ID }}"
           token: "${{ secrets.CURSEFORGE_API_KEY }}"
 
